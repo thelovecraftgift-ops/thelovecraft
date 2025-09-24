@@ -217,7 +217,8 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
 
   return (
     <motion.section
-      className={`w-full relative ${className}`}
+      // TOP MARGIN ya PADDING yahan add kiya hai
+      className={`w-full relative mt-20 md:mt-20 lg:mt-20 ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -348,99 +349,99 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        .banner-slider {
-          aspect-ratio: 16/9;
-          border-radius: 12px;
-          overflow: hidden;
-        }
-        
-        .banner-slider .swiper-pagination {
-          bottom: 16px !important;
-          z-index: 15;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-        
-        .banner-slider .swiper-pagination-bullet {
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          margin: 0 4px !important;
-          opacity: 0.7;
-          backdrop-filter: blur(8px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .banner-slider .swiper-pagination-bullet:hover {
-          transform: scale(1.3) !important;
-          opacity: 1;
-          box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
-        }
-        
-        .banner-slider .swiper-pagination-bullet-active {
-          opacity: 1 !important;
-          transform: scale(1.1);
-          box-shadow: 0 6px 20px rgba(236, 72, 153, 0.6);
-        }
-        
-        .banner-slide {
-          position: relative;
-          aspect-ratio: 16/9;
-          overflow: hidden;
-          border-radius: 12px;
-        }
-        
-        .banner-slider .swiper-slide img {
-          filter: brightness(1.02) contrast(1.05) saturate(1.1);
-          object-fit: cover;
-          object-position: center center;
-          width: 100%;
-          height: 100%;
-        }
-        
-        /* Pink Theme Glow Effects */
-        .swiper-button-prev-custom:hover,
-        .swiper-button-next-custom:hover {
-          box-shadow: 0 8px 32px rgba(236, 72, 153, 0.3);
-        }
-        
-        /* Mobile Responsive Styles */
-        @media (max-width: 768px) {
+          .banner-slider {
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            overflow: hidden;
+          }
+          
           .banner-slider .swiper-pagination {
-            bottom: 12px !important;
+            bottom: 16px !important;
+            z-index: 15;
+            display: flex;
+            justify-content: center;
+            align-items: center;
           }
+          
           .banner-slider .swiper-pagination-bullet {
-            margin: 0 3px !important;
-            width: 8px !important;
-            height: 8px !important;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            margin: 0 4px !important;
+            opacity: 0.7;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           }
-        }
-        
-        /* Aspect ratio utility */
-        .aspect-w-16 {
-          position: relative;
-          padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-        }
-        
-        .aspect-w-16 > * {
-          position: absolute;
-          height: 100%;
-          width: 100%;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          left: 0;
-        }
-        
-        /* Loading shimmer effect */
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        
-        .shimmer {
-          animation: shimmer 2s infinite;
-        }
-      `,
+          
+          .banner-slider .swiper-pagination-bullet:hover {
+            transform: scale(1.3) !important;
+            opacity: 1;
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+          }
+          
+          .banner-slider .swiper-pagination-bullet-active {
+            opacity: 1 !important;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.6);
+          }
+          
+          .banner-slide {
+            position: relative;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            border-radius: 12px;
+          }
+          
+          .banner-slider .swiper-slide img {
+            filter: brightness(1.02) contrast(1.05) saturate(1.1);
+            object-fit: cover;
+            object-position: center center;
+            width: 100%;
+            height: 100%;
+          }
+          
+          /* Pink Theme Glow Effects */
+          .swiper-button-prev-custom:hover,
+          .swiper-button-next-custom:hover {
+            box-shadow: 0 8px 32px rgba(236, 72, 153, 0.3);
+          }
+          
+          /* Mobile Responsive Styles */
+          @media (max-width: 768px) {
+            .banner-slider .swiper-pagination {
+              bottom: 12px !important;
+            }
+            .banner-slider .swiper-pagination-bullet {
+              margin: 0 3px !important;
+              width: 8px !important;
+              height: 8px !important;
+            }
+          }
+          
+          /* Aspect ratio utility */
+          .aspect-w-16 {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+          }
+          
+          .aspect-w-16 > * {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+          }
+          
+          /* Loading shimmer effect */
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+          
+          .shimmer {
+            animation: shimmer 2s infinite;
+          }
+        `,
         }}
       />
     </motion.section>

@@ -241,7 +241,24 @@ const sendOtp = async (req, res) => {
     console.log("OTP saved:", newOtp);
     await newOtp.save();
 
-    const message = `<p>Your OTP for verification is: <b>${otpCode}</b></p>`;
+  const message = `
+  <div style="font-family: Arial, sans-serif; color: #333; font-size: 16px; line-height: 1.6;">
+    <p style="margin: 0 0 10px;">Hello,</p>
+    <p style="margin: 0 0 10px;">
+      Your One-Time Password (OTP) for verification is:
+    </p>
+    <p style="margin: 15px 0; font-size: 22px; font-weight: bold; color: #800000;">
+      ${otpCode}
+    </p>
+    <p style="margin: 0 0 10px; color: #888; font-size: 14px;">
+      Please use this OTP within the next 10 minutes to complete your verification.
+    </p>
+    <p style="margin: 20px 0 0; color: #d1477f; font-size: 14px; font-weight: 500;">
+      – The Verification Team
+    </p>
+  </div>
+`;  
+
     await sendEmail(email, "Verify your email", message);
 
     // ✅ Fixed:

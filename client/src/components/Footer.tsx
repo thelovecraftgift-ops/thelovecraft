@@ -65,7 +65,7 @@ const Footer = () => {
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
           
-          {/* Brand Section - Enhanced [6] */}
+          {/* Brand Section */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -76,7 +76,6 @@ const Footer = () => {
             {/* Logo & Brand */}
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
-               
                 <div>
                  <img src={logo} alt="logo" className="h-30 w-60 relative bottom-5"/>
                 </div>
@@ -88,39 +87,23 @@ const Footer = () => {
               </p>
             </div>
 
-            {/* Social & Contact */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-4">
-                <motion.a
-                  href="https://www.instagram.com/thelovecraft.gift"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center hover:bg-white/20 transition-all duration-300 group"
-                  aria-label="Instagram"
-                >
-                  <Instagram className="w-6 h-6 text-pink-200 group-hover:text-white transition-colors" />
-                </motion.a>
-                
-                <div className="flex-1">
-                  <a 
-                    href="mailto:thelovecraft.gift@gmail.com" 
-                    className="flex items-center space-x-3 text-pink-100 hover:text-white transition-colors group"
-                  >
-                    <Mail className="w-5 h-5" />
-                    <span className="text-sm font-medium">thelovecraft.gift@gmail.com</span>
-                  </a>
-                </div>
-              </div>
-
-              <a 
-                href="tel:8757331432"
-                className="flex items-center space-x-3 text-pink-100 hover:text-white transition-colors group"
+            {/* Social Icons with Instagram Name */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+              <motion.a
+                href="https://www.instagram.com/thelovecraft.gift"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center space-x-3 group"
               >
-                <Phone className="w-5 h-5" />
-                <span className="text-lg font-semibold">+91 8757331432</span>
-              </a>
+                <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center hover:bg-white/20 transition-all duration-300 group">
+                  <Instagram className="w-6 h-6 text-pink-200 group-hover:text-white transition-colors" />
+                </div>
+                <span className="text-pink-200 font-medium text-lg hover:text-white transition-colors">
+                  @thelovecraft.gift
+                </span>
+              </motion.a>
             </div>
 
             {/* Values */}
@@ -202,7 +185,7 @@ const Footer = () => {
             </nav>
           </motion.div>
 
-          {/* Address */}
+          {/* Contact Us Section - Updated */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -212,13 +195,14 @@ const Footer = () => {
           >
             <h3 className="text-xl font-bold text-white mb-6 flex items-center">
               <span className="w-2 h-8 bg-gradient-to-b from-red-300 to-pink-300 rounded-full mr-3"></span>
-              Visit Us
+              Contact Us
             </h3>
             
-            <address className="not-italic space-y-4">
-              <div className="flex items-start space-x-3 text-pink-100">
+            <address className="not-italic space-y-4 text-pink-100">
+              <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 mt-1 flex-shrink-0" />
                 <div>
+                  <h4 className="font-bold text-lg mb-1">Visit Us</h4>
                   <p className="font-medium leading-relaxed">
                     NH 33, Dimna Pardih Road<br />
                     Opposite SBI Bank<br />
@@ -226,14 +210,33 @@ const Footer = () => {
                   </p>
                 </div>
               </div>
-            </address>
+              
+              {/* Email details */}
+              <div className="flex items-center space-x-3">
+                <Mail className="w-5 h-5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-bold text-lg mb-1">Email Us</h4>
+                  <a href="mailto:thelovecraft.gift@gmail.com" className="text-sm font-medium hover:underline">
+                    thelovecraft.gift@gmail.com
+                  </a>
+                </div>
+              </div>
 
-            {/* Store Hours */}
-         
+              {/* Phone details */}
+              <div className="flex items-center space-x-3">
+                <Phone className="w-5 h-5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-bold text-lg mb-1">Call Us</h4>
+                  <a href="tel:+918757331432" className="text-sm font-medium hover:underline">
+                    +91 8757331432
+                  </a>
+                </div>
+              </div>
+            </address>
           </motion.div>
         </div>
 
-        {/* Newsletter Section [10] */}
+        {/* Newsletter Section */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}

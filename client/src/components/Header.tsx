@@ -576,27 +576,45 @@ const Header = () => {
                     </div>
 
                     {/* Admin Panel */}
-                    {isAdmin && (
-                      <div className="mb-8 border-t-2 border-rose-200 pt-6">
-                        <h3 className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-4 flex items-center">
-                          <LayoutDashboard className="w-4 h-4 mr-2" />
-                          Admin Panel
-                        </h3>
-                        <button
-                          onClick={() => {
-                            navigate("/admin");
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="flex items-center w-full text-left px-4 py-4 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl font-bold transition-colors shadow-lg hover:shadow-xl border-2 border-amber-400"
-                        >
-                          <LayoutDashboard size={20} className="mr-4" strokeWidth={1.5} />
-                          <div>
-                            <div className="font-bold">Admin Dashboard</div>
-                            <div className="text-xs opacity-90">Manage your store</div>
-                          </div>
-                        </button>
-                      </div>
-                    )}
+                  {isAdmin && (
+  <div className="mb-8 border-t-2 border-rose-200 pt-6">
+    <h3 className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-4 flex items-center">
+      <LayoutDashboard className="w-4 h-4 mr-2" />
+      Admin Panel
+    </h3>
+
+    {/* Admin Dashboard Button */}
+    <button
+      onClick={() => {
+        navigate("/admin");
+        setIsMobileMenuOpen(false);
+      }}
+      className="flex items-center w-full text-left px-4 py-4 text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl font-bold transition-colors shadow-lg hover:shadow-xl border-2 border-amber-400 mb-4"
+    >
+      <LayoutDashboard size={20} className="mr-4" strokeWidth={1.5} />
+      <div>
+        <div className="font-bold">Admin Dashboard</div>
+        <div className="text-xs opacity-90">Manage your store</div>
+      </div>
+    </button>
+
+    {/* Add Coupon Button */}
+    <button
+      onClick={() => {
+        navigate("/admin/addcoupon");
+        setIsMobileMenuOpen(false);
+      }}
+      className="flex items-center w-full text-left px-4 py-4 text-white bg-gradient-to-r from-pink-600 via-rose-700 to-red-800 rounded-2xl font-bold transition-colors shadow-lg hover:shadow-xl border-2 border-rose-400"
+    >
+      <Gift size={20} className="mr-4" strokeWidth={1.5} />
+      <div>
+        <div className="font-bold">Add Coupon</div>
+        <div className="text-xs opacity-90">Create new discount codes</div>
+      </div>
+    </button>
+  </div>
+)}
+
 
                     {/* Authentication */}
                     <div className="border-t-2 border-rose-200 pt-6">

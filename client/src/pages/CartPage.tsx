@@ -21,6 +21,7 @@ import {
   Star,
   Sparkles,
   Shield,
+  Tag,
 } from "lucide-react";
 
 // Phone verification + payment hooks
@@ -48,21 +49,36 @@ const CartPage = () => {
     phone: "",
   });
 
-  const getProductId = (item: any) => item._id || item.id;
-  const totalPrice = getCartTotal();
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<null | { code: string; discount: number }>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
-  // Dynamic delivery charge with rule: Online => free if >= 500; COD => always 80
+  const getProductId = (item: any) => item._id || item.id;
+  
+  // Items subtotal (before coupon)
+  const itemsSubtotal = getCartTotal();
+
+  // Discount from coupon
+  const discountAmount = appliedCoupon?.discount || 0;
+
+  // Subtotal after coupon discount
+  const payableSubtotal = Math.max(0, itemsSubtotal - discountAmount);
+
+  // Dynamic delivery charge (using payableSubtotal for online payment rule)
   const getDeliveryCharge = (paymentMethod: "cod" | "online" | null = selectedPaymentMethod) => {
     if (paymentMethod === "online") {
-      return totalPrice >= 500 ? 0 : 80;
+      return payableSubtotal >= 500 ? 0 : 80;
     } else {
       return 80;
     }
   };
 
   const DELIVERY_CHARGE = getDeliveryCharge();
+  const grandTotal = payableSubtotal + DELIVERY_CHARGE;
+
   const freeDeliveryGap =
-    selectedPaymentMethod === "online" ? Math.max(0, 500 - totalPrice) : null;
+    selectedPaymentMethod === "online" ? Math.max(0, 500 - payableSubtotal) : null;
 
   // Phone verification success
   useEffect(() => {
@@ -124,6 +140,58 @@ const CartPage = () => {
     phoneVerification.setShowPhoneVerification(true);
   };
 
+  // Apply coupon handler
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      toast({
+        title: "Enter coupon",
+        description: "Please enter a coupon code",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (itemsSubtotal <= 0) {
+      toast({
+        title: "Empty cart",
+        description: "Add items first",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      setCouponLoading(true);
+      const resp = await axiosInstance.post("/admin/checkcoupon", {
+        code,
+        subtotal: itemsSubtotal,
+      });
+      setAppliedCoupon({ code: resp.data.code, discount: resp.data.discount });
+      toast({
+        title: "🎉 Coupon applied",
+        description: `You saved ₹${resp.data.discount}!`,
+      });
+    } catch (err: any) {
+      setAppliedCoupon(null);
+      const msg = err?.response?.data?.message || "Invalid coupon";
+      toast({
+        title: "Coupon failed",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    toast({
+      title: "Removed",
+      description: "Coupon removed",
+    });
+  };
+
   const handlePaymentSelection = async (paymentMethod: "cod" | "online") => {
     const requiredFields = ["fullName", "address", "city", "state", "pinCode", "phone"];
     const missingFields = requiredFields.filter((f) => !shippingAddress[f].trim());
@@ -161,9 +229,11 @@ const CartPage = () => {
       shippingAddress,
       paymentMethod,
       {
-        itemsTotal: totalPrice,
+        itemsTotal: itemsSubtotal,
         deliveryCharge,
-        totalAmount: totalPrice + deliveryCharge,
+        coupon: appliedCoupon?.code || null,
+        discount: discountAmount,
+        totalAmount: payableSubtotal + deliveryCharge,
       },
       "cart"
     );
@@ -172,6 +242,8 @@ const CartPage = () => {
       clearCart();
       setIsCheckingOut(false);
       setSelectedPaymentMethod(null);
+      setAppliedCoupon(null);
+      setCouponCode("");
       phoneVerification.resetPhoneVerification();
     }
   };
@@ -283,7 +355,7 @@ const CartPage = () => {
               <div className="mt-2 bg-orange-200 h-2 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-orange-400 to-yellow-500 transition-all duration-500"
-                  style={{ width: `${Math.min((totalPrice / 500) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((payableSubtotal / 500) * 100, 100)}%` }}
                 />
               </div>
             </motion.div>
@@ -441,6 +513,8 @@ const CartPage = () => {
                       onClick={() => {
                         clearCart();
                         setSelectedPaymentMethod(null);
+                        setAppliedCoupon(null);
+                        setCouponCode("");
                         toast({
                           title: "Cart cleared",
                           description: "All treasures removed from your cart",
@@ -469,6 +543,51 @@ const CartPage = () => {
                   <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" />
                   Order Summary
                 </h2>
+
+                {/* Coupon Input */}
+                <div className="mb-4 p-3 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl">
+                  <h3 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-purple-600" />
+                    Apply Coupon
+                  </h3>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      disabled={couponLoading || !!appliedCoupon}
+                      className="h-9 text-xs border-2 border-purple-200 focus:border-purple-500 focus:ring-purple-500 rounded-lg uppercase"
+                    />
+                    {appliedCoupon ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleRemoveCoupon}
+                        className="h-9 text-xs px-3 rounded-lg"
+                      >
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading}
+                        size="sm"
+                        className="h-9 text-xs px-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      >
+                        {couponLoading ? "..." : "Apply"}
+                      </Button>
+                    )}
+                  </div>
+
+                  {appliedCoupon && (
+                    <div className="mt-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-2 py-1.5 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      <span className="font-semibold">
+                        {appliedCoupon.code} applied • Saved ₹{appliedCoupon.discount.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Payment method */}
                 <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl">
@@ -529,10 +648,20 @@ const CartPage = () => {
                 <div className="border-t-2 border-rose-100 pt-3 space-y-2">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-700 font-medium">
-                      Subtotal ({cart.reduce((sum, i) => sum + (i.quantity || 1), 0)} items)
+                      Items Subtotal ({cart.reduce((sum, i) => sum + (i.quantity || 1), 0)} items)
                     </span>
-                    <span className="font-semibold">₹{totalPrice.toLocaleString()}</span>
+                    <span className="font-semibold">₹{itemsSubtotal.toLocaleString()}</span>
                   </div>
+
+                  {appliedCoupon && (
+                    <div className="flex justify-between items-center text-sm text-green-700">
+                      <span className="font-medium flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        Coupon Discount
+                      </span>
+                      <span className="font-semibold">-₹{discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-700 font-medium">Delivery Charge</span>
@@ -561,12 +690,12 @@ const CartPage = () => {
                           <div
                             className="bg-gradient-to-r from-orange-400 to-orange-500 h-full rounded-full transition-all duration-500"
                             style={{
-                              width: `${Math.min((totalPrice / 500) * 100, 100)}%`,
+                              width: `${Math.min((payableSubtotal / 500) * 100, 100)}%`,
                             }}
                           />
                         </div>
                         <div className="text-[10px] text-orange-600 mt-1 text-center">
-                          {Math.round((totalPrice / 500) * 100)}% towards free delivery
+                          {Math.round((payableSubtotal / 500) * 100)}% towards free delivery
                         </div>
                       </div>
                     )}
@@ -587,7 +716,7 @@ const CartPage = () => {
                       Total Amount
                     </span>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-rose-600 to-red-700">
-                      ₹{(totalPrice + DELIVERY_CHARGE).toLocaleString()}
+                      ₹{grandTotal.toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -611,7 +740,6 @@ const CartPage = () => {
           </div>
         </div>
       </div>
-
 
       {/* Checkout Modal */}
       <AnimatePresence>
@@ -641,7 +769,7 @@ const CartPage = () => {
                     <div>
                       <h2 className="text-xl font-black">Checkout</h2>
                       <p className="text-sm text-pink-100 mt-1">
-                        Total: ₹{(totalPrice + getDeliveryCharge(selectedPaymentMethod)).toLocaleString()}
+                        Total: ₹{grandTotal.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -665,9 +793,18 @@ const CartPage = () => {
                   </h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center font-medium border-b-2 border-rose-200 pb-2">
-                      <span>Subtotal</span>
-                      <span>₹{totalPrice.toLocaleString()}</span>
+                      <span>Items Subtotal</span>
+                      <span>₹{itemsSubtotal.toLocaleString()}</span>
                     </div>
+                    {appliedCoupon && (
+                      <div className="flex justify-between items-center text-green-700 font-medium">
+                        <span className="flex items-center gap-1">
+                          <Tag className="w-3 h-3" />
+                          Coupon ({appliedCoupon.code})
+                        </span>
+                        <span>-₹{discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center text-rose-700">
                       <span>Delivery</span>
                       <span className="font-medium">
@@ -679,7 +816,7 @@ const CartPage = () => {
                     <div className="flex justify-between items-center font-black text-base text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600 pt-2">
                       <span className="text-gray-900">Total Amount</span>
                       <span>
-                        ₹{(totalPrice + getDeliveryCharge(selectedPaymentMethod)).toLocaleString()}
+                        ₹{(payableSubtotal + getDeliveryCharge(selectedPaymentMethod)).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -797,8 +934,8 @@ const CartPage = () => {
                     <div className="flex items-center justify-center gap-2">
                       <Lock className="w-4 h-4" />
                       Pay Online - ₹
-                      {(totalPrice + getDeliveryCharge("online")).toLocaleString()}
-                      {getDeliveryCharge("online") === 0 && totalPrice >= 500 && (
+                      {(payableSubtotal + getDeliveryCharge("online")).toLocaleString()}
+                      {getDeliveryCharge("online") === 0 && payableSubtotal >= 500 && (
                         <span className="text-xs bg-green-500 px-2 py-0.5 rounded-full ml-1">FREE DELIVERY</span>
                       )}
                     </div>
@@ -820,7 +957,7 @@ const CartPage = () => {
                     <div className="flex items-center justify-center gap-2">
                       <Truck className="w-4 h-4" />
                       Cash on Delivery - ₹
-                      {(totalPrice + getDeliveryCharge("cod")).toLocaleString()}
+                      {(payableSubtotal + getDeliveryCharge("cod")).toLocaleString()}
                       <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-1">+₹80 DELIVERY</span>
                     </div>
                   )}

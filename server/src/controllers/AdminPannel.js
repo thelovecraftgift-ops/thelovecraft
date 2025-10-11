@@ -6,6 +6,7 @@ const User = require("../models/user");
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const slugify = require("slugify");
+const Coupon = require("../models/coupon");
 
 const Getsignature = async (req, res) => {
   try {
@@ -375,6 +376,265 @@ const getCarts = async (req, res) => {
   }
 };
 
+
+const outOFstock = async(req,res)=>{
+  try{
+    const { id , status } = req.body;
+
+    // 1. Field missing check (Corrected from previous fix)
+    if(!id || !("status" in req.body)) throw new Error("Field missing!");
+    
+    // 2. ✅ FIX: Product find karte samay 'await' ka use karein.
+    const productDoc = await Product.findById(id); 
+    
+    if(!productDoc) throw new Error("Product does not exist");
+    
+    // 3. Status update karein
+    productDoc.Product_available = status;
+    
+    // 4. ✅ FIX: 'productDoc' (jo ki ek Mongoose Document hai) par save() call karein aur 'await' use karein.
+    await productDoc.save();
+    
+    res.status(200).send("Updated successfully");
+  }catch(e){
+    res.status(400).json({
+      message:"Something went wrong! "+e.message
+    })
+  }
+}
+
+function getPublicId(url) {
+  try {
+    const path = new URL(url).pathname;
+    const afterUpload = path.split('/image/upload/')[1] || '';
+    const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+    const publicId = withoutVersion.replace(/\.[^/.]+$/, '');
+    return publicId;
+  } catch (e) {
+    return null;
+  }
+}
+
+const updateCategory = async (req, res) => {
+  try {
+    const { image, name, description, id } = req.body;
+
+    const response = await Category.findById(id);
+    if (!response) throw new Error("Category not found");
+
+    // agar image change hui ho
+    if (response.category_image !== image) {
+      const public_id = getPublicId(response.category_image);
+      if (public_id) {
+        const cloudinaryRes = await cloudinary.uploader.destroy(public_id);
+        if (cloudinaryRes.result !== "ok") {
+          throw new Error("Failed to delete old image");
+        }
+      }
+    }
+
+    response.category_image = image;
+    response.category_description = description;
+    response.category = name;
+
+    await response.save();
+
+    res.status(200).json({
+      message: "Updated successfully",
+      status: "success"
+    });
+  } catch (e) {
+    res.status(500).json({
+      message: e.message,
+      status: "failed"
+    });
+  }
+};
+ 
+const updateProduct = async (req,res)=>{
+  try{
+
+    const {id , name , description , price , hamperPrice}  = req.body;
+    const response = await Product.findById(id);
+    if(!response) throw new Error("invalid product");
+    response.Product_name = name
+    response.Product_discription = description
+    response.Product_price = price
+    response.Hamper_price = hamperPrice
+
+    response.save();
+    res.status(200).json({
+      message:"product updated succesfully",
+      status:"success"
+    })
+  }catch (e) {
+    res.status(500).json({
+      message: e.message,
+      status: "failed"
+    });
+}
+}
+function computeDiscount({ subtotal, couponDoc }) {
+  if (!couponDoc) {
+    return { ok: false, reason: "Coupon not found" };
+  }
+
+  if (!couponDoc.active) {
+    return { ok: false, reason: "Coupon is inactive" };
+  }
+
+  const now = new Date();
+  if (couponDoc.startsAt && now < couponDoc.startsAt) {
+    return { ok: false, reason: "Coupon not started yet" };
+  }
+  if (couponDoc.expiresAt && now > couponDoc.expiresAt) {
+    return { ok: false, reason: "Coupon expired" };
+  }
+  if (couponDoc.usageLimit && couponDoc.usedCount >= couponDoc.usageLimit) {
+    return { ok: false, reason: "Coupon usage limit reached" };
+  }
+  if (subtotal < (couponDoc.minOrder || 0)) {
+    return { ok: false, reason: `Minimum order ₹${couponDoc.minOrder} not met` };
+  }
+
+  let discount = 0;
+  if (couponDoc.percent) {
+    discount = (couponDoc.percent / 100) * subtotal;
+    if (couponDoc.maxDiscount != null && couponDoc.maxDiscount > 0) {
+      discount = Math.min(discount, couponDoc.maxDiscount);
+    }
+  } else if (couponDoc.rupees) {
+    discount = couponDoc.rupees;
+  }
+
+  discount = Math.max(0, Math.min(discount, subtotal));
+  const totalAfter = Math.max(0, subtotal - discount);
+
+  return {
+    ok: true,
+    discount: Math.round(discount),
+    totalAfter: Math.round(totalAfter),
+  };
+}
+
+const genCoupon = async (req, res) => {
+  try {
+    const {
+      code,
+      percent,
+      rupees,
+      minOrder,
+      maxDiscount,
+      startsAt,
+      expiresAt,
+      active = true,
+      usageLimit,
+    } = req.body;
+
+    if (!code) throw new Error("code is required");
+
+    // normalize code
+    const payload = {
+      code: String(code).trim().toUpperCase(),
+      percent: percent ?? null,
+      rupees: rupees ?? null,
+      minOrder: minOrder ?? 0,
+      maxDiscount: maxDiscount ?? null,
+      startsAt: startsAt ? new Date(startsAt) : null,
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
+      active: !!active,
+      usageLimit: usageLimit ?? null,
+    };
+
+    const created = await Coupon.create(payload);
+    res.status(201).json({
+      message: "Coupon created successfully",
+      data: created,
+    });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+      status: "failed",
+    });
+  }
+};
+
+const deleteCoupon = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) throw new Error("id is required");
+    const deleted = await Coupon.findByIdAndDelete(id);
+    if (!deleted) throw new Error("Coupon not found");
+    res.status(200).json({
+      message: "Coupon deleted successfully",
+    });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+      status: "failed",
+    });
+  }
+};
+
+// Validate coupon against subtotal and return discount
+const checkCoupon = async (req, res) => {
+  try {
+    const { code, subtotal } = req.body;
+
+    if (!code) throw new Error("code is required");
+    if (subtotal == null || Number.isNaN(Number(subtotal))) {
+      throw new Error("valid subtotal is required");
+    }
+
+    const doc = await Coupon.findOne({ code: String(code).trim().toUpperCase() });
+    const result = computeDiscount({ subtotal: Number(subtotal), couponDoc: doc });
+
+    if (!result.ok) {
+      return res.status(400).json({
+        message: result.reason || "invalid coupon",
+        status: "failed",
+      });
+    }
+
+    res.status(200).json({
+      message: "Coupon valid",
+      code: String(code).trim().toUpperCase(),
+      discount: result.discount,
+      totalAfter: result.totalAfter,
+      status: "ok",
+    });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message || "invalid coupon",
+      status: "failed",
+    });
+  }
+};
+
+// Optionally increment usage when an order is placed successfully
+const incrementCouponUsage = async (code) => {
+  if (!code) return;
+  await Coupon.findOneAndUpdate(
+    { code: String(code).trim().toUpperCase() },
+    { $inc: { usedCount: 1 } }
+  );
+};
+
+const getCoupon = async (req, res) => {
+  try {
+    const data = await Coupon.find({}).sort({ createdAt: -1 });
+    res.status(200).json({
+      data,
+      message: "All coupons",
+    });
+  } catch (e) {
+    res.status(400).json({
+      message: e.message,
+      status: "failed",
+    });
+  }
+};
+
 module.exports = {
   Getsignature,
   SaveProduct,
@@ -388,4 +648,12 @@ module.exports = {
   getOrders,
   getCarts,
   deleteCategory,
+  outOFstock,
+  updateCategory,
+  updateProduct,
+  getCoupon,
+  genCoupon,
+  deleteCoupon,
+  checkCoupon,
+  incrementCouponUsage
 };

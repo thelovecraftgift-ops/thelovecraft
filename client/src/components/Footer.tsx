@@ -202,7 +202,6 @@ const Footer = () => {
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 mt-1 flex-shrink-0" />
                 <div>
-                  <h4 className="font-bold text-lg mb-1">Visit Us</h4>
                   <p className="font-medium leading-relaxed">
                     NH 33, Dimna Pardih Road<br />
                     Opposite SBI Bank<br />

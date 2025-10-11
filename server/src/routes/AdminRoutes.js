@@ -9,10 +9,14 @@ const {
   AddCategory,
   getProducts,
   getCategories,
-  getUsers,
+  getUsers, 
   getOrders,
   getCarts,
-  deleteCategory
+  deleteCategory,
+   getCoupon,
+    genCoupon,
+    deleteCoupon,
+    checkCoupon
 } = require("../controllers/AdminPannel");
 const adminMiddleware = require("../middleware/adminMiddleware");
 
@@ -24,6 +28,10 @@ AdminRouter.post("/addbanner", adminMiddleware, AddBanner);
 AdminRouter.post("/deletebanner", adminMiddleware, deleteBanner);
 AdminRouter.post("/addcategory", adminMiddleware, AddCategory);
 AdminRouter.post("/deletecategory", adminMiddleware, deleteCategory);
+AdminRouter.post("/addcoupon",adminMiddleware,genCoupon);
+AdminRouter.post("/deletecoupon",adminMiddleware,deleteCoupon);
+AdminRouter.post("/checkcoupon",checkCoupon);
+AdminRouter.get("/getCoupon",adminMiddleware,getCoupon)
 AdminRouter.get("/getproducts", adminMiddleware, getProducts);
 AdminRouter.get("/getcategories", adminMiddleware, getCategories);
 

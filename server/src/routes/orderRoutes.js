@@ -18,7 +18,7 @@ orderRouter.get('/:id', userMiddleware, getOrder);
 
 // Admin routes
 orderRouter.get('/admin/all', adminMiddleware, getAllOrders);
-orderRouter.patch('/admin/:id/status', adminMiddleware, updateOrderStatus);
+orderRouter.patch('/admin/status/:id', adminMiddleware, updateOrderStatus);
 orderRouter.patch('/admin/:id/payment', adminMiddleware, updatePaymentStatus);
 
 module.exports = orderRouter; 

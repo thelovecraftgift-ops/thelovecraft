@@ -240,24 +240,77 @@ const sendOtp = async (req, res) => {
 
     console.log("OTP saved:", newOtp);
     await newOtp.save();
+const message = `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #5a2d47; font-size: 16px; line-height: 1.6; background: linear-gradient(135deg, #fff5f7 0%, #ffeef2 100%); padding: 40px 30px; border-radius: 20px;">
+    
+    <!-- Header with Branding -->
+    <div style="text-align: center; margin-bottom: 30px;">
+      <div style="background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%); padding: 20px; border-radius: 15px; display: inline-block;">
+        <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 1px;">
+          TheLoveCraft
+        </h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0; font-size: 14px; font-style: italic;">
+          Exquisite Handcrafted Gifts
+        </p>
+      </div>
+    </div>
 
-  const message = `
-  <div style="font-family: Arial, sans-serif; color: #333; font-size: 16px; line-height: 1.6;">
-    <p style="margin: 0 0 10px;">Hello,</p>
-    <p style="margin: 0 0 10px;">
-      Your One-Time Password (OTP) for verification is:
-    </p>
-    <p style="margin: 15px 0; font-size: 22px; font-weight: bold; color: #800000;">
-      ${otpCode}
-    </p>
-    <p style="margin: 0 0 10px; color: #888; font-size: 14px;">
-      Please use this OTP within the next 10 minutes to complete your verification.
-    </p>
-    <p style="margin: 20px 0 0; color: #d1477f; font-size: 14px; font-weight: 500;">
-      – The Verification Team
-    </p>
+    <!-- Main Content -->
+    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(219, 39, 119, 0.1);">
+      <p style="margin: 0 0 15px; color: #5a2d47; font-size: 18px;">
+        Dear Valued Customer,
+      </p>
+      
+      <p style="margin: 0 0 20px; color: #7e3a5f;">
+        Thank you for choosing TheLoveCraft! Your One-Time Password for verification is:
+      </p>
+
+      <!-- OTP Display -->
+      <div style="text-align: center; margin: 30px 0;">
+        <div style="background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); padding: 20px; border-radius: 12px; display: inline-block; border: 2px dashed #ec4899;">
+          <div style="font-size: 32px; font-weight: 700; color: #be185d; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+            ${otpCode}
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div style="background: #fdf2f8; padding: 15px; border-radius: 10px; border-left: 4px solid #ec4899; margin: 25px 0;">
+        <p style="margin: 0; color: #7e3a5f; font-size: 14px;">
+          ⏰ <strong>Valid for 10 minutes</strong><br>
+          🔒 <strong>Do not share this OTP with anyone</strong><br>
+          ✨ <strong>For your account security</strong>
+        </p>
+      </div>
+
+      <p style="margin: 20px 0 0; color: #9d4b6d; font-size: 14px; text-align: center;">
+        If you didn't request this verification, please ignore this email.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #f9a8d4;">
+      <p style="margin: 0 0 10px; color: #9d4b6d; font-size: 14px;">
+        With love and sparkles ✨
+      </p>
+      <p style="margin: 0; color: #ec4899; font-weight: 600; font-size: 16px;">
+        The LoveCraft Team
+      </p>
+      <p style="margin: 10px 0 0; color: #c0849d; font-size: 12px;">
+        Crafting memories that last a lifetime 💖
+      </p>
+    </div>
+
+    <!-- Decorative Elements -->
+    <div style="text-align: center; margin-top: 20px;">
+      <span style="display: inline-block; width: 8px; height: 8px; background: #ec4899; border-radius: 50%; margin: 0 5px;"></span>
+      <span style="display: inline-block; width: 8px; height: 8px; background: #f472b6; border-radius: 50%; margin: 0 5px;"></span>
+      <span style="display: inline-block; width: 8px; height: 8px; background: #f9a8d4; border-radius: 50%; margin: 0 5px;"></span>
+      <span style="display: inline-block; width: 8px; height: 8px; background: #f472b6; border-radius: 50%; margin: 0 5px;"></span>
+      <span style="display: inline-block; width: 8px; height: 8px; background: #ec4899; border-radius: 50%; margin: 0 5px;"></span>
+    </div>
   </div>
-`;  
+`;
 
     await sendEmail(email, "Verify your email", message);
 

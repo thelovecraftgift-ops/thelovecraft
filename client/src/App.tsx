@@ -34,7 +34,8 @@ import Privacy from './components/PRIVACY';
 import Refund from './components/REFUND';
 import Terms from "./components/TERMS";
 import Contact from "./components/Contact";
-import About from "./components/About"
+import About from "./components/About";
+import ManageCoupons from "./pages/admin/addcoupon";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
                   <Route path="banners" element={<Banners />} />
                   <Route path="users" element={<Users />} />
                 </Route>
+                <Route path="/admin/addcoupon" element={<ManageCoupons/>}/>
 
                 <Route path="profile" element={<Profile />} />
                 <Route path="orders" element={<Orders />} />

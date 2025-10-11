@@ -261,7 +261,7 @@ const CategoryGrid: React.FC = () => {
                           <motion.img
                             src={category.image || "/fallback.jpg"}
                             alt={category.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-fill"
                             whileHover={{ scale: 1.05 }}
                             transition={{ duration: 0.6 }}
                             onError={(e) => {

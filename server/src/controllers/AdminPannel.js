@@ -375,6 +375,106 @@ const getCarts = async (req, res) => {
   }
 };
 
+
+const outOFstock = async(req,res)=>{
+  try{
+    const { id , status } = req.body;
+
+    // 1. Field missing check (Corrected from previous fix)
+    if(!id || !("status" in req.body)) throw new Error("Field missing!");
+    
+    // 2. ✅ FIX: Product find karte samay 'await' ka use karein.
+    const productDoc = await Product.findById(id); 
+    
+    if(!productDoc) throw new Error("Product does not exist");
+    
+    // 3. Status update karein
+    productDoc.Product_available = status;
+    
+    // 4. ✅ FIX: 'productDoc' (jo ki ek Mongoose Document hai) par save() call karein aur 'await' use karein.
+    await productDoc.save();
+    
+    res.status(200).send("Updated successfully");
+  }catch(e){
+    res.status(400).json({
+      message:"Something went wrong! "+e.message
+    })
+  }
+}
+
+function getPublicId(url) {
+  try {
+    const path = new URL(url).pathname;
+    const afterUpload = path.split('/image/upload/')[1] || '';
+    const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+    const publicId = withoutVersion.replace(/\.[^/.]+$/, '');
+    return publicId;
+  } catch (e) {
+    return null;
+  }
+}
+
+const updateCategory = async (req, res) => {
+  try {
+    const { image, name, description, id } = req.body;
+
+    const response = await Category.findById(id);
+    if (!response) throw new Error("Category not found");
+
+    // agar image change hui ho
+    if (response.category_image !== image) {
+      const public_id = getPublicId(response.category_image);
+      if (public_id) {
+        const cloudinaryRes = await cloudinary.uploader.destroy(public_id);
+        if (cloudinaryRes.result !== "ok") {
+          throw new Error("Failed to delete old image");
+        }
+      }
+    }
+
+    response.category_image = image;
+    response.category_description = description;
+    response.category = name;
+
+    await response.save();
+
+    res.status(200).json({
+      message: "Updated successfully",
+      status: "success"
+    });
+  } catch (e) {
+    res.status(500).json({
+      message: e.message,
+      status: "failed"
+    });
+  }
+};
+ 
+const updateProduct = async (req,res)=>{
+  try{
+
+    const {id , name , description , price , hamperPrice}  = req.body;
+    const response = await Product.findById(id);
+    if(!response) throw new Error("invalid product");
+    response.Product_name = name
+    response.Product_discription = description
+    response.Product_price = price
+    response.Hamper_price = hamperPrice
+
+    response.save();
+    res.status(200).json({
+      message:"product updated succesfully",
+      status:"success"
+    })
+  }catch (e) {
+    res.status(500).json({
+      message: e.message,
+      status: "failed"
+    });
+}
+}
+
+
 module.exports = {
   Getsignature,
   SaveProduct,
@@ -388,4 +488,7 @@ module.exports = {
   getOrders,
   getCarts,
   deleteCategory,
+  outOFstock,
+  updateCategory,
+  updateProduct
 };

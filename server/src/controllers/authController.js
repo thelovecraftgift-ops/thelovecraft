@@ -364,7 +364,7 @@ const verifyEmail = async (req, res) => {
 const logout = async (req, res) => {
   try {
     const token = req.cookies.token;
-
+ 
     if (!token) {
       return res.status(400).json({ message: "No token found in cookies" });
     }

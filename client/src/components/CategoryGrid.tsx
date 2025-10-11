@@ -292,10 +292,10 @@ const CategoryGrid: React.FC = () => {
                         </div>
 
                         {/* Content Section */}
-                        <div className="p-4 sm:p-6">
+                        <div className="p-2 sm:p-2">
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2 line-clamp-1">
+                              <h3 className="text-l sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2 line-clamp-1">
                                 {category.name}
                               </h3>
                               

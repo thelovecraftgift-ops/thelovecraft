@@ -1,268 +1,4 @@
-// import React, { useEffect, useState } from "react";
-// import ProductForm from "./ProductForm";
-// import {
-//   Dialog,
-//   DialogTrigger,
-//   DialogContent,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogDescription,
-//   DialogClose,
-// } from "@/components/ui/dialog";
-// import { Button } from "@/components/ui/button";
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { Badge } from "@/components/ui/badge";
-// import axios from "axios";
-// import { useToast } from "@/hooks/use-toast";
-// import { Loader2, Plus, Trash2 } from "lucide-react";
-
-// const API_URL = import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:3000";
-
-// const cloudinaryOptions = [
-//   {
-//     name: "Primary Cloud",
-//     endpoint: "/api/admin/getsignature" // This matches your server endpoint
-//   },
-//   {
-//     name: "Secondary Cloud", 
-//     endpoint: "/api/admin/getsignature" // Same endpoint, different cloudInstance parameter
-//   }
-// ];
-
-// export default function Products() {
-//   const [products, setProducts] = useState<any[]>([]);
-//   const [categories, setCategories] = useState<any[]>([]);
-//   const [isDialogOpen, setIsDialogOpen] = useState(false);
-//   const [loading, setLoading] = useState(false);
-//   const { toast } = useToast();
-
-//   // Fetch all products and categories from backend
-//   useEffect(() => {
-//     const fetchProducts = async () => {
-//       setLoading(true);
-//       try {
-//         const adminToken = localStorage.getItem("admin_token");
-//         const res = await axios.get(`${API_URL}/admin/getproducts`, {
-//           withCredentials: true,
-//           headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {}
-//         });
-//         setProducts(res.data.product || []);
-        
-//       } catch (err: any) {
-//         setProducts([]);
-//         toast({ title: "Error", description: err?.response?.data?.message || "Failed to fetch products", variant: "destructive" });
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     const fetchCategories = async () => {
-//       try {
-//         const res = await axios.get(`${API_URL}/api/getcategories`, {
-//           withCredentials: true,
-//         });
-//         // Standardize backend category structure to frontend expected structure
-//         const transformedCategories = res.data.categories?.map((cat: any) => ({
-//           id: cat.id || cat._id || cat.category,
-//           name: cat.name || cat.category,
-//           image: cat.image || cat.category_image,
-//           description: cat.description || cat.category_description || ""
-//         })) || [];
-//         setCategories(transformedCategories);
-//       } catch (err) {
-//         // fallback to initial categories if backend not implemented
-//         const fallbackCategories = [
-//           { id: "pendants", name: "Pendants", image: "", description: "" },
-//           { id: "earrings", name: "Earrings", image: "", description: "" },
-//           { id: "jhumkas", name: "Jhumkas", image: "", description: "" },
-//           { id: "bracelets", name: "Bracelets", image: "", description: "" },
-//           { id: "hair-accessories", name: "Hair Accessories", image: "", description: "" },
-//           { id: "hampers", name: "Hampers", image: "", description: "" },
-//           { id: "customized-hampers", name: "Customized Hampers", image: "", description: "" },
-//         ];
-//         setCategories(fallbackCategories);
-//       }
-//     };
-//     fetchProducts();
-//     fetchCategories();
-//   }, [toast]);
-
-//   // Add product
-//   const handleAddProduct = async (product: any) => {
-//     setLoading(true);
-//     try {
-//       const adminToken = localStorage.getItem("admin_token");
-//       // Map ProductForm fields to backend fields
-//       const payload = {
-//         Product_name: product.name,
-//         Product_discription: product.description,
-//         Product_price: Number(product.price),
-//         Product_image: product.images,
-//         Product_category: product.category,
-//         Product_available: true,
-//         Product_public_id: product.images?.[0] || "",
-//       };
-//       const res = await axios.post(`${API_URL}/admin/saveproduct`, payload, {
-//         withCredentials: true,
-//         headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {}
-//       });
-//       setProducts((prev) => [res.data.product, ...prev]);
-//       setIsDialogOpen(false);
-//       toast({
-//         title: "Product Added",
-//         description: "The product has been successfully added to your store.",
-//         variant: "default"
-//       });
-//     } catch (err: any) {
-//       toast({ title: "Error", description: err?.response?.data?.message || "Failed to add product", variant: "destructive" });
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   // Delete product
-//   const handleDelete = async (id: string, publicId: string) => {
-//     setLoading(true);
-//     try {
-//       const adminToken = localStorage.getItem("admin_token");
-//       await axios.post(`${API_URL}/admin/deleteproduct`, { _id: id, Product_public_id: publicId }, {
-//         withCredentials: true,
-//         headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {}
-//       });
-//       setProducts((prev) => prev.filter((p) => p._id !== id));
-//       toast({
-//         title: "Product Deleted",
-//         description: "The product has been successfully removed from your store.",
-//         variant: "default"
-//       });
-//     } catch (err: any) {
-//       toast({ title: "Error", description: err?.response?.data?.message || "Failed to delete product", variant: "destructive" });
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <Card>
-//       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-//         <CardTitle className="text-2xl font-bold">Products</CardTitle>
-//         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-//           <DialogTrigger asChild>
-//             <Button className="bg-purple-600 hover:bg-purple-700">
-//               <Plus className="mr-2 h-4 w-4" />
-//               Add Product
-//             </Button>
-//           </DialogTrigger>
-
-//           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-//             <DialogHeader>
-//               <DialogTitle>Add New Product</DialogTitle>
-//               <DialogDescription>
-//                 Fill in the product details below.
-//               </DialogDescription>
-//             </DialogHeader>
-
-//             <ProductForm
-//               onSubmit={handleAddProduct}
-//               categories={categories}
-//               cloudinaryOptions={cloudinaryOptions}
-//             />
-
-//             <DialogClose asChild>
-//               <Button variant="outline" className="mt-4">
-//                 Close
-//               </Button>
-//             </DialogClose>
-//           </DialogContent>
-//         </Dialog>
-//       </CardHeader>
-
-//       <CardContent>
-//         {loading ? (
-//           <div className="flex items-center justify-center py-8">
-//             <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-//           </div>
-//         ) : products.length === 0 ? (
-//           <div className="text-center py-8 text-gray-500">
-//             No products found. Add your first product to get started.
-//           </div>
-//         ) : (
-//           <div className="rounded-md border">
-//             <Table>
-//               <TableHeader>
-//                 <TableRow>
-//                   <TableHead>Name</TableHead>
-//                   <TableHead>Description</TableHead>
-//                   <TableHead>Price</TableHead>
-//                   <TableHead>Category</TableHead>
-//                   <TableHead>Images</TableHead>
-//                   <TableHead className="text-right">Actions</TableHead>
-//                 </TableRow>
-//               </TableHeader>
-//               <TableBody>
-//                 {products.map((product) => (
-//                   <TableRow key={product._id}>
-//                     <TableCell className="font-medium">{product.Product_name}</TableCell>
-//                     <TableCell className="max-w-[300px] truncate">
-//                       {product.Product_discription}
-//                     </TableCell>
-//                     <TableCell>₹{product.Product_price}</TableCell>
-//                     <TableCell>
-//                       <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-100">
-//                         {typeof product.Product_category === 'string' 
-//                           ? product.Product_category 
-//                           : product.Product_category?.category || 'Uncategorized'}
-//                       </Badge>
-//                     </TableCell>
-//                     <TableCell>
-//                       <div className="flex gap-1 flex-wrap">
-//                         {product.Product_image?.map((img: string, idx: number) => (
-//                           <img
-//                             key={idx}
-//                             src={img}
-//                             alt="Product"
-//                             className="w-10 h-10 object-cover rounded-md border border-gray-200"
-//                           />
-//                         ))}
-//                       </div>
-//                     </TableCell>
-//                     <TableCell className="text-right">
-//                       <Button
-//                         variant="destructive"
-//                         size="sm"
-//                         onClick={() => handleDelete(product._id, product.Product_public_id)}
-//                       >
-//                         <Trash2 className="h-4 w-4" />
-//                       </Button>
-//                     </TableCell>
-//                   </TableRow>
-//                 ))}
-//               </TableBody>
-//             </Table>
-//           </div>
-//         )}
-//       </CardContent>
-//     </Card>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-import React, { useEffect, useState } from "react";
-import ProductForm from "./ProductForm";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -283,31 +19,81 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Gift, Package } from "lucide-react";
+import { Loader2, Plus, Trash2, Power, Gift, Package } from "lucide-react";
+import ProductForm from "./ProductForm";
 
 const API_URL = import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:3000";
+const PLACEHOLDER_IMG = "/placeholder-product.jpg";
 
-const cloudinaryOptions = [
-  {
-    name: "Primary Cloud",
-    endpoint: "/api/admin/getsignature"
-  },
-  {
-    name: "Secondary Cloud", 
-    endpoint: "/api/admin/getsignature"
+interface ProductType {
+  _id: string;
+  Product_name: string;
+  Product_discription: string;
+  Product_price: number;
+  Hamper_price?: number | null;
+  Product_image: string[] | string;
+  Product_category: any;
+  Product_available: boolean;
+  isHamper_product: boolean;
+  Product_public_id: string;
+}
+
+type AvailabilityFilter = "all" | "available" | "unavailable";
+
+// Helpers to normalize and resolve images
+const normalizeUrl = (src?: string) => {
+  if (!src) return "";
+  // Absolute urls or data URIs
+  if (/^(https?:)?\/\//i.test(src) || src.startsWith("data:")) return src;
+  // Clean relative paths and prepend API_URL
+  const cleaned = src.startsWith("/") ? src : `/${src}`;
+  return `${API_URL}${cleaned}`.replace(/([^:]\/)\/+/g, "$1");
+};
+
+const getCategoryId = (cat: any): string | undefined => {
+  if (!cat) return undefined;
+  if (typeof cat === "string") return cat;
+  return cat.id || cat._id || cat.category || cat.name;
+};
+
+const getProductImage = (p: ProductType, cats: any[]) => {
+  // 1) Product_image as array: pick first non-empty string
+  if (Array.isArray(p.Product_image) && p.Product_image.length > 0) {
+    const first = p.Product_image.find((x) => typeof x === "string" && x.trim() !== "");
+    if (first) return normalizeUrl(first);
   }
-];
+  // 2) Product_image as string
+  if (typeof p.Product_image === "string" && p.Product_image.trim() !== "") {
+    return normalizeUrl(p.Product_image);
+  }
+  // 3) Try category image
+  const catId = getCategoryId(p.Product_category);
+  const cat = cats.find((c) => c.id === catId || c.name === catId);
+  if (cat?.image) return normalizeUrl(cat.image);
+  // 4) Fallback placeholder
+  return PLACEHOLDER_IMG;
+};
 
 export default function Products() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [availabilityFilter, setAvailabilityFilter] =
+    useState<AvailabilityFilter>("all");
+  const [productToEdit, setProductToEdit] = useState<ProductType | null>(null);
+
   const { toast } = useToast();
 
-  // Fetch all products and categories from backend
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -315,13 +101,17 @@ export default function Products() {
         const adminToken = localStorage.getItem("admin_token");
         const res = await axios.get(`${API_URL}/admin/getproducts`, {
           withCredentials: true,
-          headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {}
+          headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
         });
         setProducts(res.data.product || []);
-        
       } catch (err: any) {
         setProducts([]);
-        toast({ title: "Error", description: err?.response?.data?.message || "Failed to fetch products", variant: "destructive" });
+        toast({
+          title: "Error",
+          description:
+            err?.response?.data?.message || "Failed to fetch products",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -332,12 +122,14 @@ export default function Products() {
         const res = await axios.get(`${API_URL}/api/getcategories`, {
           withCredentials: true,
         });
-        const transformedCategories = res.data.categories?.map((cat: any) => ({
-          id: cat.id || cat._id || cat.category,
-          name: cat.name || cat.category,
-          image: cat.image || cat.category_image,
-          description: cat.description || cat.category_description || ""
-        })) || [];
+        const transformedCategories =
+          res.data.categories?.map((cat: any) => ({
+            id: cat.id || cat._id || cat.category,
+            name: cat.name || cat.category,
+            image: cat.image || cat.category_image,
+            description:
+              cat.description || cat.category_description || "",
+          })) || [];
         setCategories(transformedCategories);
       } catch (err) {
         const fallbackCategories = [
@@ -357,122 +149,320 @@ export default function Products() {
     fetchCategories();
   }, [toast]);
 
-  // ✅ Enhanced add product with hamper support
-  const handleAddProduct = async (product: any) => {
-  setLoading(true);
-  try {
-    const adminToken = localStorage.getItem("admin_token");
-    
-    const payload = {
-      Product_name: product.name,
-      Product_discription: product.description,
-      Product_price: Number(product.price),
-      Hamper_price: product.hamperPrice ? Number(product.hamperPrice) : undefined,
-      Product_image: product.images,
-      Product_category: product.category,
-      Product_available: product.isAvailable,
-      isHamper_product: product.isHamperProduct,
-      Product_public_id: product.images?.[0] || "",
-    };
+  const handleToggleAvailability = async (product: ProductType) => {
+    const newAvailability = !product.Product_available;
+    setProducts((prev) =>
+      prev.map((p) =>
+        p._id === product._id ? { ...p, Product_available: newAvailability } : p
+      )
+    );
 
-    // ✅ ADD THIS DEBUG LOG
-    console.log('🔍 PAYLOAD BEING SENT TO BACKEND:', payload);
-    console.log('🔍 Hamper Price:', payload.Hamper_price);
-    console.log('🔍 Is Hamper Product:', payload.isHamper_product);
+    try {
+      const adminToken = localStorage.getItem("admin_token");
+      await axios.post(
+        `${API_URL}/admin/availabilty`,
+        { id: product._id, status: newAvailability },
+        { withCredentials: true, headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {} }
+      );
 
-    const res = await axios.post(`${API_URL}/admin/saveproduct`, payload, {
-      withCredentials: true,
-      headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {}
-    });
-
-
-      setProducts((prev) => [res.data.product, ...prev]);
-      setIsDialogOpen(false);
-      
       toast({
-        title: "Product Added Successfully!",
-        description: `${product.name} has been added to your store${product.isHamperProduct ? ' and is available for custom hampers' : ''}.`,
-        variant: "default"
+        title: "Availability Updated",
+        description: `${product.Product_name} is now ${
+          newAvailability ? "Available" : "Unavailable"
+        }`,
+        variant: newAvailability ? "default" : "destructive",
+        duration: 3000,
       });
     } catch (err: any) {
-      toast({ title: "Error", description: err?.response?.data?.message || "Failed to add product", variant: "destructive" });
-    } finally {
-      setLoading(false);
+      setProducts((prev) =>
+        prev.map((p) =>
+          p._id === product._id ? { ...p, Product_available: !newAvailability } : p
+        )
+      );
+      toast({
+        title: "Error",
+        description:
+          err?.response?.data?.message ||
+          `Failed to update ${product.Product_name}`,
+        variant: "destructive",
+      });
     }
   };
 
-  // Delete product
   const handleDelete = async (id: string, publicId: string) => {
-    if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-      return;
-    }
-
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
     setLoading(true);
     try {
       const adminToken = localStorage.getItem("admin_token");
-      await axios.post(`${API_URL}/admin/deleteproduct`, { _id: id, Product_public_id: publicId }, {
-        withCredentials: true,
-        headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {}
-      });
+      await axios.post(
+        `${API_URL}/admin/deleteproduct`,
+        { _id: id, Product_public_id: publicId },
+        { withCredentials: true, headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {} }
+      );
       setProducts((prev) => prev.filter((p) => p._id !== id));
       toast({
-        title: "Product Deleted",
-        description: "The product has been successfully removed from your store.",
-        variant: "default"
+        title: "Deleted",
+        description: "Product removed successfully",
+        variant: "default",
       });
     } catch (err: any) {
-      toast({ title: "Error", description: err?.response?.data?.message || "Failed to delete product", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: err?.response?.data?.message || "Failed to delete product",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Helper function to calculate hamper discount
-  const getHamperDiscount = (regularPrice: number, hamperPrice: number) => {
-    if (!hamperPrice || hamperPrice >= regularPrice) return null;
-    const discount = regularPrice - hamperPrice;
-    const percentage = ((discount / regularPrice) * 100).toFixed(1);
-    return { discount, percentage };
+  const handleProductSubmit = async (data: any) => {
+    setLoading(true);
+    try {
+      const adminToken = localStorage.getItem("admin_token");
+
+      if (productToEdit) {
+        await axios.post(
+          `${API_URL}/admin/update/product`,
+          {
+            id: productToEdit._id,
+            name: data.name,
+            description: data.description,
+            price: Number(data.price),
+            hamperPrice: data.hamperPrice ? Number(data.hamperPrice) : null,
+          },
+          { withCredentials: true, headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {} }
+        );
+
+        setProducts((prev) =>
+          prev.map((p) =>
+            p._id === productToEdit._id
+              ? {
+                  ...p,
+                  Product_name: data.name,
+                  Product_discription: data.description,
+                  Product_price: Number(data.price),
+                  Hamper_price: data.hamperPrice ? Number(data.hamperPrice) : null,
+                }
+              : p
+          )
+        );
+        toast({ title: "Updated", description: "Product updated successfully" });
+      } else {
+        const res = await axios.post(
+          `${API_URL}/admin/saveproduct`,
+          {
+            Product_name: data.name,
+            Product_discription: data.description,
+            Product_price: Number(data.price),
+            Hamper_price: data.hamperPrice ? Number(data.hamperPrice) : null,
+            Product_image: data.images || [],
+            Product_category: data.category || "",
+            Product_available: data.isAvailable ?? true,
+            isHamper_product: data.isHamperProduct ?? false,
+            Product_public_id: "",
+          },
+          { withCredentials: true, headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {} }
+        );
+
+        setProducts((prev) => [res.data.product, ...prev]);
+        toast({ title: "Added", description: "Product added successfully" });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err?.response?.data?.message || "Failed to save product",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDialogOpen(false);
+      setProductToEdit(null);
+      setLoading(false);
+    }
+  };
+
+  const filteredProducts = useMemo(() => {
+    if (availabilityFilter === "all") return products;
+    const isAvailable = availabilityFilter === "available";
+    return products.filter((p) => p.Product_available === isAvailable);
+  }, [products, availabilityFilter]);
+
+  const AddEditForm = ({
+    initialData,
+    onSubmit,
+  }: {
+    initialData?: ProductType | null;
+    onSubmit: (data: any) => void;
+  }) => {
+    const [name, setName] = useState(initialData?.Product_name || "");
+    const [description, setDescription] = useState(
+      initialData?.Product_discription || ""
+    );
+    const [price, setPrice] = useState(initialData?.Product_price || 0);
+    const [hamperPrice, setHamperPrice] = useState<string>(
+      initialData?.Hamper_price != null ? String(initialData.Hamper_price) : ""
+    );
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      onSubmit({
+        name,
+        description,
+        price,
+        hamperPrice: hamperPrice === "" ? null : Number(hamperPrice),
+      });
+    };
+
+    return (
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 p-4 rounded-lg shadow-md dark:shadow-none bg-white dark:bg-gray-800"
+      >
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+            Product Name
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+            required
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+            Product Description
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 resize-none"
+            required
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:space-x-4">
+          <div className="flex flex-col flex-1">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+              Regular Price
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={price}
+              onChange={(e) => setPrice(Number(e.target.value))}
+              className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col flex-1 mt-4 sm:mt-0">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+              Hamper Price (Optional)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={hamperPrice}
+              onChange={(e) => setHamperPrice(e.target.value)}
+              placeholder="Leave empty if not applicable"
+              className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"
+            />
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-semibold rounded-md py-2 transition-all"
+        >
+          {initialData ? "Update Product" : "Add Product"}
+        </Button>
+      </form>
+    );
   };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0 pb-6">
         <div>
           <CardTitle className="text-2xl font-bold">Products</CardTitle>
-          <p className="text-sm text-gray-600 mt-1">
-            Manage your jewelry products and hamper pricing
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+            Manage your products and hamper pricing
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
-          </DialogTrigger>
 
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
-              <DialogDescription>
-                Fill in the product details below. Enable hamper pricing to make products available for custom hampers.
-              </DialogDescription>
-            </DialogHeader>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Select
+            value={availabilityFilter}
+            onValueChange={(value: AvailabilityFilter) =>
+              setAvailabilityFilter(value)
+            }
+            disabled={loading}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by Availability" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All ({products.length})</SelectItem>
+              <SelectItem value="available">
+                Available ({products.filter((p) => p.Product_available).length})
+              </SelectItem>
+              <SelectItem value="unavailable">
+                Unavailable ({products.filter((p) => !p.Product_available).length})
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
-            <ProductForm
-              onSubmit={handleAddProduct}
-              categories={categories}
-              cloudinaryOptions={cloudinaryOptions}
-            />
-
-            <DialogClose asChild>
-              <Button variant="outline" className="mt-4">
-                Close
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) setProductToEdit(null);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                {productToEdit ? "Edit Product" : "Add Product"}
               </Button>
-            </DialogClose>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {productToEdit ? "Edit Product" : "Add New Product"}
+                </DialogTitle>
+                <DialogDescription>
+                  Fill in the product details below.
+                </DialogDescription>
+              </DialogHeader>
+
+              {productToEdit ? (
+                <AddEditForm
+                  initialData={productToEdit}
+                  onSubmit={handleProductSubmit}
+                />
+              ) : (
+                <ProductForm
+                  onSubmit={handleProductSubmit}
+                  categories={categories}
+                  cloudinaryOptions={[
+                    { name: "Primary Cloud", endpoint: "/api/admin/getsignature" },
+                  ]}
+                />
+              )}
+
+              <DialogClose asChild>
+                <Button variant="outline" className="mt-4 w-full">
+                  Close
+                </Button>
+              </DialogClose>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
 
       <CardContent>
@@ -480,115 +470,127 @@ export default function Products() {
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
           </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <div className="mb-4">
-              <Package className="h-16 w-16 mx-auto text-gray-300" />
+              <Package className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600" />
             </div>
             <h3 className="text-lg font-medium mb-2">No products found</h3>
-            <p className="text-sm">Add your first product to get started with your jewelry store.</p>
+            <p className="text-sm">
+              Add your first product to get started with your store.
+            </p>
           </div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
+          <div className="rounded-md border overflow-x-auto">
+            <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[72px]">Image</TableHead>
                   <TableHead>Product</TableHead>
-                  <TableHead>Regular Price</TableHead>
+                  <TableHead>Price</TableHead>
                   <TableHead>Hamper Price</TableHead>
-                  <TableHead>Hamper Status</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Images</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product) => {
-                  const hamperDiscount = product.Hamper_price ? 
-                    getHamperDiscount(product.Product_price, product.Hamper_price) : null;
-                  
+                {filteredProducts.map((product) => {
+                  const imgSrc = getProductImage(product, categories);
                   return (
                     <TableRow key={product._id}>
+                      {/* Image */}
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{product.Product_name}</div>
-                          <div className="text-xs text-gray-500 max-w-[200px] truncate">
-                            {product.Product_discription}
-                          </div>
-                          {!product.Product_available && (
-                            <Badge variant="secondary" className="mt-1 text-xs">
-                              Unavailable
-                            </Badge>
-                          )}
+                        <div className="w-16 h-16 rounded-md overflow-hidden border border-gray-200 bg-gray-50">
+                          <img
+                            src={imgSrc}
+                            alt={product.Product_name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              const absPlaceholder =
+                                window.location.origin + PLACEHOLDER_IMG;
+                              if (target.src !== absPlaceholder) {
+                                target.src = PLACEHOLDER_IMG;
+                              }
+                            }}
+                          />
                         </div>
                       </TableCell>
-                      
+
+                      {/* Product details */}
                       <TableCell>
-                        <span className="font-medium">₹{product.Product_price?.toLocaleString()}</span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {product.Product_name}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-300 truncate max-w-[260px]">
+                            {product.Product_discription}
+                          </span>
+                          <Badge
+                            variant="secondary"
+                            className={`mt-1 text-xs w-24 flex justify-center ${
+                              product.Product_available
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {product.Product_available ? "Available" : "Unavailable"}
+                          </Badge>
+                        </div>
                       </TableCell>
-                      
+
+                      {/* Price */}
+                      <TableCell>₹{Number(product.Product_price).toLocaleString()}</TableCell>
+
+                      {/* Hamper Price */}
                       <TableCell>
-                        {product.Hamper_price ? (
-                          <div className="space-y-1">
-                            <span className="font-medium text-green-600">
-                              ₹{product.Hamper_price.toLocaleString()}
-                            </span>
-                            {hamperDiscount && (
-                              <div className="text-xs text-green-700">
-                                Save ₹{hamperDiscount.discount} ({hamperDiscount.percentage}% off)
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">Not set</span>
-                        )}
+                        {product.Hamper_price != null
+                          ? `₹${Number(product.Hamper_price).toLocaleString()}`
+                          : "-"}
                       </TableCell>
-                      
+
+                      {/* Status (hamper/regular) */}
                       <TableCell>
                         {product.isHamper_product ? (
-                          <Badge className="bg-orange-100 text-orange-800 border-orange-200">
-                            <Gift className="w-3 h-3 mr-1" />
-                            Hamper Eligible
+                          <Badge className="bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200 flex items-center gap-1">
+                            <Gift className="w-3 h-3" /> Hamper
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">Regular Only</Badge>
+                          <Badge variant="secondary">Regular</Badge>
                         )}
                       </TableCell>
-                      
-                      <TableCell>
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-100">
-                          {typeof product.Product_category === 'string' 
-                            ? product.Product_category 
-                            : product.Product_category?.category || 'Uncategorized'}
-                        </Badge>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {product.Product_image?.slice(0, 3).map((img: string, idx: number) => (
-                            <img
-                              key={idx}
-                              src={img}
-                              alt="Product"
-                              className="w-10 h-10 object-cover rounded-md border border-gray-200"
-                            />
-                          ))}
-                          {product.Product_image?.length > 3 && (
-                            <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500">
-                              +{product.Product_image.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell className="text-right">
+
+                      {/* Actions */}
+                      <TableCell className="flex gap-2 justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setProductToEdit(product);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDelete(product._id, product.Product_public_id)}
-                          disabled={loading}
+                          onClick={() =>
+                            handleDelete(product._id, product.Product_public_id)
+                          }
                         >
                           <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleAvailability(product)}
+                        >
+                          <Power
+                            className={`h-4 w-4 ${
+                              product.Product_available ? "text-green-600" : "text-red-600"
+                            }`}
+                          />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -602,11 +604,3 @@ export default function Products() {
     </Card>
   );
 }
-
-
-
-
-
-
-
-

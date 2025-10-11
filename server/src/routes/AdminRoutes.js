@@ -9,11 +9,14 @@ const {
   AddCategory,
   getProducts,
   getCategories,
-  getUsers, 
+  getUsers,
   getOrders,
   getCarts,
   deleteCategory,
-   getCoupon,
+  outOFstock,
+  updateCategory,
+  updateProduct ,
+     getCoupon,
     genCoupon,
     deleteCoupon,
     checkCoupon
@@ -28,16 +31,19 @@ AdminRouter.post("/addbanner", adminMiddleware, AddBanner);
 AdminRouter.post("/deletebanner", adminMiddleware, deleteBanner);
 AdminRouter.post("/addcategory", adminMiddleware, AddCategory);
 AdminRouter.post("/deletecategory", adminMiddleware, deleteCategory);
+AdminRouter.post("/update/category",adminMiddleware,updateCategory); 
+AdminRouter.post("/update/product",adminMiddleware,updateProduct) 
+AdminRouter.post("/availabilty",adminMiddleware,outOFstock)
+AdminRouter.get("/getproducts", adminMiddleware, getProducts);
 AdminRouter.post("/addcoupon",adminMiddleware,genCoupon);
 AdminRouter.post("/deletecoupon",adminMiddleware,deleteCoupon);
 AdminRouter.post("/checkcoupon",checkCoupon);
 AdminRouter.get("/getCoupon",adminMiddleware,getCoupon)
-AdminRouter.get("/getproducts", adminMiddleware, getProducts);
-AdminRouter.get("/getcategories", adminMiddleware, getCategories);
+AdminRouter.get("/getcategories", adminMiddleware, getCategories); 
 
 // new added by soham - Routes for admin dashboard data
 AdminRouter.get("/users", adminMiddleware, getUsers);
 AdminRouter.get("/orders", adminMiddleware, getOrders);
 AdminRouter.get("/carts", adminMiddleware, getCarts);
 
-module.exports = AdminRouter;
+module.exports = AdminRouter; 

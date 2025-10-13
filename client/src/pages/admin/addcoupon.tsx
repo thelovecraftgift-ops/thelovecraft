@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../utils/axiosConfig"; // <<-- Use your custom instance!
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Trash2, PlusCircle, Gift, ToggleRight } from "lucide-react";
@@ -13,7 +13,7 @@ type Coupon = {
   rupees?: number | null;
   minOrder?: number;
   maxDiscount?: number | null;
-  startsAt?: string | null;   // ISO strings from API
+  startsAt?: string | null;
   expiresAt?: string | null;
   active: boolean;
   usageLimit?: number | null;
@@ -43,7 +43,7 @@ const ManageCoupons = () => {
   const fetchCoupons = async () => {
     try {
       setListLoading(true);
-      const res = await axios.get(`${API}/admin/getCoupon`);
+      const res = await axiosInstance.get(`${API}/admin/getCoupon`);
       setCoupons(res.data.data || []);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to load coupons 😢");
@@ -108,7 +108,7 @@ const ManageCoupons = () => {
 
     try {
       setLoading(true);
-      await axios.post(`${API}/admin/addcoupon`, payload);
+      await axiosInstance.post(`${API}/admin/addcoupon`, payload);
       toast.success("🎉 Coupon added successfully!");
       // reset form
       setCode("");
@@ -133,7 +133,7 @@ const ManageCoupons = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this coupon?")) return;
     try {
-      await axios.post(`${API}/admin/deletecoupon`, { id });
+      await axiosInstance.post(`${API}/admin/deletecoupon`, { id });
       toast.success("🗑️ Coupon deleted");
       setCoupons((prev) => prev.filter((c) => c._id !== id));
     } catch (err: any) {

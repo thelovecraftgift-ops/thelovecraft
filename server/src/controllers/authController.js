@@ -27,13 +27,13 @@ const register = async (req, res) => {
 
     delete req.body.confirmPassword;
 
-    const otpRecord = await Otp.findOne({ email });
+    // const otpRecord = await Otp.findOne({ email });
 
-    if (!otpRecord || !otpRecord.isVerified) {
-      throw new Error(
-        "Email is not verified. Please verify your email before registering."
-      );
-    }
+    // if (!otpRecord || !otpRecord.isVerified) {
+    //   throw new Error(
+    //     "Email is not verified. Please verify your email before registering."
+    //   );
+    // }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {

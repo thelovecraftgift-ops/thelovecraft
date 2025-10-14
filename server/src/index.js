@@ -18,7 +18,7 @@ const wishlistRouter = require("./routes/wishlistRoutes");
 const notificationRouter = require("./routes/notificationRoutes"); 
 const cartRouter = require("./routes/cartRoutes");
 const numberVerifyrouter = require("./routes/NumberVerifyRoutes");
-const Cashfreerouter = require("./routes/cashfreeRoutes");
+const Razorpayrouter = require("./routes/razorpayRoutes");
 const hamperRouter = require("./routes/CreateHamperRoutes")
 
 // ✅ ADD THESE MODEL IMPORTS TO REGISTER THEM WITH MONGOOSE
@@ -67,7 +67,7 @@ app.use("/cart", cartRouter);
 app.use("/notifications", notificationRouter);
 app.use("/shiprocket",ShipRocketrouter);
 app.use("/api/verify",numberVerifyrouter);
-app.use("/cashfree",Cashfreerouter);
+app.use("/razorpay",Razorpayrouter);
 app.use("/hamper",hamperRouter);
 
 const initialConnection = async () => {

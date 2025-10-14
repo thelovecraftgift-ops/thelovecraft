@@ -3,7 +3,9 @@ import React from 'react';
 const TheLoveCraftPolicy = () => {
   return (
     <div className="bg-white p-6 md:p-12 font-sans max-w-4xl mx-auto shadow-lg rounded-lg my-8">
-      <h1 className="text-3xl md:text-4xl font-bold text-center text-pink-600 mb-6">Refund & Return Policy – The Love Craft</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-center text-pink-600 mb-6">
+        Refund & Return Policy – The Love Craft
+      </h1>
       <p className="text-gray-700 text-center mb-8">
         At The Love Craft, we value your trust. Please read our policy carefully before placing an order.
       </p>
@@ -33,7 +35,7 @@ const TheLoveCraftPolicy = () => {
           <li>A clear unboxing video (unedited) is mandatory to raise a claim.</li>
           <li>The claim must be reported within 24 hours of delivery.</li>
           <li>Original packaging and invoice should be kept safely.</li>
-          <li>If the claim is valid, we will provide a replacement or a refund to the original payment source.</li>
+          <li>If the claim is valid, we will provide a replacement or a refund to the original payment source within 24 hours.</li>
         </ul>
       </div>
 
@@ -52,7 +54,7 @@ const TheLoveCraftPolicy = () => {
           <span className="font-semibold">📧 thelovecraft.gift@gmail.com</span>
         </p>
         <p className="text-pink-600 mt-1">
-          <span className="font-semibold">📱 +91 8757331432</span>
+          <span className="font-semibold">📱 +91-8757331432</span>
         </p>
       </div>
     </div>

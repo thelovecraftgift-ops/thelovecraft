@@ -4,18 +4,51 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthContext";
 import axiosInstance from "@/utils/axiosConfig";
 
-// Extend Window interface for Cashfree
+// Razorpay ke liye Script Load karne ka Helper Function
+const loadRazorpayScript = (src: string) => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+// Razorpay Options ka Type
+interface RazorpayOptions {
+  key: string; 
+  amount: number; // Amount in paise
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string; // Razorpay Order ID from backend
+  handler: (response: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+  }) => void;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  notes: {
+    address: string;
+  };
+  theme: {
+    color: string;
+  };
+}
+
+// Extend Window interface for Razorpay (Cashfree se replace kiya)
 declare global {
   interface Window {
-    Cashfree: (config: { mode: string }) => {
-      checkout: (options: {
-        paymentSessionId: string;
-        redirectTarget?: string;
-      }) => Promise<{
-        error?: { message: string };
-        redirect?: boolean;
-        paymentDetails?: any;
-      }>;
+    Razorpay: {
+      new (options: RazorpayOptions): {
+        on: (event: string, callback: (response: any) => void) => void;
+        open: () => void;
+      };
     };
   }
 }
@@ -25,6 +58,9 @@ export const usePaymentProcessing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  // **NOTE:** Razorpay Key ID ko environment variable se fetch karna best practice hai
+  const RAZORPAY_KEY_ID = "YOUR_RAZORPAY_KEY_ID"; // 🚨 Apni actual key se replace karein
 
   const processPayment = async (
     items: any[],
@@ -52,17 +88,16 @@ export const usePaymentProcessing = () => {
         paymentMethod: paymentMethod,
         Contact_number: shippingAddress.phone,
         user_email: user.email,
-
-        // ✅ ADD THIS LINE - Identifies hamper vs regular cart orders
         isCustomHamper: cartType === "hamper",
       };
 
       console.log("📤 Sending order data:", orderData);
-      const response = await axiosInstance.post("/cashfree/create", orderData);
+      // ✅ Endpoint update kiya: /cashfree/create se /razorpay/create-order
+      const response = await axiosInstance.post("/razorpay/create-order", orderData); 
 
       if (response.data.success) {
         if (paymentMethod === "cod") {
-          // COD flow remains the same
+          // COD flow same rahega
           if (cartType === "cart") {
             await axiosInstance.delete("/cart/clear");
           } else if (cartType === "hamper") {
@@ -77,99 +112,121 @@ export const usePaymentProcessing = () => {
           navigate("/orders");
           return true;
         } else {
-          // ✅ Enhanced online payment handling
-          if (!window.Cashfree) {
-            toast({
-              title: "Payment Error",
-              description: "Payment system is loading. Please try again.",
-              variant: "destructive",
-            });
-            return false;
-          }
+          // ✅ Razorpay online payment handling
+          const { razorpayOrderId, internalOrderId, amount, razorpayKeyId } = response.data; // Server se Razorpay data expect kiya
 
-          const cashfree = window.Cashfree({ mode: "sandbox" });
-          const { cashfreeSession, orderId, internalOrderId } = response.data;
-
-          // Store session data
-          sessionStorage.setItem("orderId", orderId);
-          sessionStorage.setItem("internalOrderId", internalOrderId);
-          sessionStorage.setItem("paymentMethod", paymentMethod);
-          sessionStorage.setItem("cartType", cartType);
-
-          console.log(
-            "🔑 Starting payment with session ID:",
-            cashfreeSession.payment_session_id
+          // Step 1: Razorpay Script Load karna
+          const isLoaded = await loadRazorpayScript(
+            "https://checkout.razorpay.com/v1/checkout.js"
           );
 
-          const result = await cashfree.checkout({
-            paymentSessionId: cashfreeSession.payment_session_id,
-            redirectTarget: "_self",
-          });
-
-          console.log("💳 Cashfree checkout result:", result);
-
-          // ✅ Handle all possible results
-          if (result.redirect) {
-            // Payment initiated successfully - redirect to callback for verification
-            console.log("✅ Payment initiated - redirecting to verification");
-            navigate("/payment/callback");
-            return true;
-          } else if (result.error) {
-            // Direct error from Cashfree SDK
-            console.error("❌ Cashfree checkout error:", result.error);
+          if (!isLoaded || !window.Razorpay) {
             toast({
-              title: "Payment Failed",
-              description:
-                result.error.message || "Payment could not be processed",
+              title: "Payment Error",
+              description: "Razorpay script load nahi ho paya. Phir se try karein.",
               variant: "destructive",
             });
             return false;
-          } else {
-            // ✅ No redirect and no error - user likely cancelled or payment failed
-            console.warn(
-              "⚠️ Payment completed without redirect - checking status"
-            );
-
-            // Brief delay then check payment status
-            setTimeout(async () => {
-              try {
-                const verifyRes = await axiosInstance.post("/cashfree/verify", {
-                  orderId,
-                  internalOrderId,
-                });
-
-                if (
-                  verifyRes.data.success &&
-                  verifyRes.data.paymentStatus === "SUCCESS"
-                ) {
-                  // Payment actually succeeded
-                  navigate("/payment/callback");
-                } else {
-                  // Payment failed or cancelled
-                  toast({
-                    title: "Payment Not Completed",
-                    description:
-                      "Your payment was not successful. You can retry with a different payment method.",
-                    variant: "destructive",
-                    duration: 8000,
-                  });
-                }
-              } catch (error) {
-                console.error("Error verifying payment:", error);
-                toast({
-                  title: "Payment Status Unknown",
-                  description:
-                    "Please check your order status or contact support if amount was debited.",
-                  variant: "destructive",
-                });
-              }
-            }, 2000);
-
-            return false;
           }
+
+          // Step 2: Payment Verification Handler
+          const handlePaymentSuccess = async (razorpayResponse: {
+            razorpay_payment_id: string;
+            razorpay_order_id: string;
+            razorpay_signature: string;
+          }) => {
+            try {
+              // Payment success hone par server par verification call karna
+              const verifyRes = await axiosInstance.post(
+                "/razorpay/verify-payment", // ✅ Verification endpoint update kiya
+                {
+                  ...razorpayResponse,
+                  internalOrderId, // Hamara DB order ID
+                }
+              );
+
+              if (verifyRes.data.success) {
+                // Payment successful aur order process ho gaya
+                if (cartType === "cart") {
+                  await axiosInstance.delete("/cart/clear");
+                } else if (cartType === "hamper") {
+                  await axiosInstance.delete("/hamper/clear");
+                }
+
+                toast({
+                  title: "Payment Successful! 🥳",
+                  description: "Aapka payment ho gaya aur order place ho chuka hai.",
+                });
+                navigate("/orders");
+                return true;
+              } else {
+                // Verification failed 
+                toast({
+                  title: "Payment Verification Failed",
+                  description:
+                    verifyRes.data.message ||
+                    "Payment verify nahi ho paya. Order status check karein.",
+                  variant: "destructive",
+                  duration: 8000,
+                });
+                navigate("/orders"); 
+                return false;
+              }
+            } catch (error) {
+              console.error("Payment verification error:", error);
+              toast({
+                title: "Payment Status Unknown",
+                description:
+                  "Transaction complete ho gayi hai, par status unknown hai. Please contact support.",
+                variant: "destructive",
+                duration: 8000,
+              });
+              // navigate("/orders"); // Status unknown hone par user ko Order page pe le ja sakte hain
+              return false;
+            }
+          };
+
+          // Step 3: Razorpay Checkout Options
+          const options: RazorpayOptions = {
+            key: razorpayKeyId || RAZORPAY_KEY_ID, // Server se mili key ya fallback key
+            amount: amount, // Amount in paise
+            currency: "INR",
+            name: "TheLoveCraft", 
+            description: `Order ID: ${internalOrderId}`,
+            order_id: razorpayOrderId, 
+            handler: handlePaymentSuccess, 
+
+            prefill: {
+              name: user.name || "Customer", 
+              email: user.email, 
+              contact: shippingAddress.phone, 
+            },
+            notes: {
+              address: `${shippingAddress.street}, ${shippingAddress.city}`,
+            },
+            theme: {
+              color: "#3399cc", 
+            },
+          };
+
+          // Step 4: Razorpay Open karna
+          const rzp1 = new window.Razorpay(options);
+
+          // Payment close hone par handle karein (user ne close kar diya)
+          rzp1.on("payment.failed", function (response: any) {
+            console.error("❌ Razorpay Payment Failed:", response.error);
+            toast({
+              title: "Payment Failed",
+              description: response.error.description || "Aapka payment fail ho gaya.",
+              variant: "destructive",
+            });
+          });
+
+          rzp1.open();
+          return true; // Payment window open ho gaya
         }
       } else {
-        // Order creation failed
+        // Order creation failed on backend
         throw new Error(response.data.message || "Failed to create order");
       }
     } catch (error: any) {

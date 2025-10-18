@@ -1,5 +1,3 @@
-
-
 const axios = require('axios');
 const baseURL = 'https://cpaas.messagecentral.com';
 const User = require("../models/user");
@@ -37,16 +35,13 @@ const TEMP_NUMBER_PREFIXES = [
 
 // Enhanced temp number detection
 function isTempNumber(mobileNumber) {
-  // Clean the number first
   const cleanNumber = mobileNumber.replace(/\D/g, '');
   
-  // Check against known prefixes
   const isTempPrefix = TEMP_NUMBER_PREFIXES.some(prefix => {
     const cleanPrefix = prefix.replace(/\D/g, '');
     return cleanNumber.startsWith(cleanPrefix);
   });
   
-  // Additional patterns for common temp services
   const commonTempPatterns = [
     /^91(0000|1111|2222|3333|4444|5555|6666|7777|8888|9999)/, // India repetitive
     /^1(0000|1111|2222|3333|4444|5555|6666|7777|8888|9999)/, // US repetitive
@@ -67,12 +62,25 @@ async function getAuthToken() {
       key,
       scope: 'NEW'
     };
+    
+    console.log('🔑 Requesting auth token for customer:', process.env.MC_CUSTOMER_ID);
+    
     const url = `${baseURL}/auth/v1/authentication/token`;
     const res = await axios.get(url, { params });
+    
+    if (!res.data.token) {
+      throw new Error('No token received from authentication service');
+    }
+    
+    console.log('✅ Auth token received');
     return res.data.token;
   } catch (error) {
-    console.error('Auth token error:', error);
-    throw new Error('Failed to get authentication token');
+    console.error('❌ Auth token error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    throw new Error('Failed to get authentication token: ' + (error.response?.data?.message || error.message));
   }
 }
 
@@ -101,29 +109,29 @@ async function CheckphoneNo(req, res) {
     let userPhoneClean = '';
     
     if (userInfo.phoneNo) {
-      const userPhoneStr = userInfo.phoneNo.toString();
-      // Handle +91 8590863462 format
-      if (userPhoneStr.startsWith('+91 ')) {
-        userPhoneClean = userPhoneStr.substring(4).replace(/\D/g, '');
-      } 
-      // Handle 918590863462 format
-      else if (userPhoneStr.startsWith('91') && userPhoneStr.length === 12) {
-        userPhoneClean = userPhoneStr.substring(2);
-      }
-      // Handle 8590863462 format
-      else {
-        userPhoneClean = userPhoneStr.replace(/\D/g, '');
+      // Remove ALL non-digits for comparison
+      userPhoneClean = userInfo.phoneNo.toString().replace(/\D/g, '');
+      
+      // Remove country code if present (91 for India)
+      if (userPhoneClean.startsWith('91') && userPhoneClean.length === 12) {
+        userPhoneClean = userPhoneClean.substring(2);
       }
     }
     
+    // Also clean input phone (remove 91 if present)
+    let normalizedInputPhone = cleanInputPhone;
+    if (normalizedInputPhone.startsWith('91') && normalizedInputPhone.length === 12) {
+      normalizedInputPhone = normalizedInputPhone.substring(2);
+    }
+    
     console.log('📞 Phone check:', {
-      inputPhone: cleanInputPhone,
+      inputPhone: normalizedInputPhone,
       userPhone: userPhoneClean,
       isVerified: userInfo.isPhoneVerified,
-      match: userPhoneClean === cleanInputPhone
+      match: userPhoneClean === normalizedInputPhone
     });
     
-    if (userPhoneClean === cleanInputPhone && userInfo.isPhoneVerified) {
+    if (userPhoneClean === normalizedInputPhone && userInfo.isPhoneVerified) {
       return res.status(200).json({
         success: true,
         isVerified: true,
@@ -159,7 +167,6 @@ async function sendOtp(req, res) {
   if (countryCode === '91') {
     const cleanNumber = mobileNumber.replace(/\D/g, '');
     
-    // Check length
     if (cleanNumber.length !== 10) {
       return res.status(400).json({
         success: false,
@@ -167,7 +174,6 @@ async function sendOtp(req, res) {
       });
     }
     
-    // Check if starts with valid digit
     if (!['6', '7', '8', '9'].includes(cleanNumber[0])) {
       return res.status(400).json({
         success: false,
@@ -191,7 +197,7 @@ async function sendOtp(req, res) {
       customerId: process.env.MC_CUSTOMER_ID,
       countryCode,
       flowType: 'SMS',
-      mobileNumber: mobileNumber.replace(/\D/g, '') // Clean the number
+      mobileNumber: mobileNumber.replace(/\D/g, '')
     };
     
     console.log('📤 Sending OTP:', params);
@@ -204,14 +210,21 @@ async function sendOtp(req, res) {
     
     const data = response.data.data;
     
-    if (response.data.responseCode === 200 && !data.errorMessage) {
+    console.log('📥 OTP Response:', data);
+    
+    // FIX: Check for success properly - MessageCentral returns errorMessage: 'Success' when OTP is sent
+    if (
+      response.data.responseCode === 200 && 
+      data.verificationId && 
+      (data.errorMessage === 'Success' || !data.errorMessage || data.errorMessage.toLowerCase().includes('success'))
+    ) {
       console.log('✅ OTP sent successfully:', data.verificationId);
       
       return res.status(200).json({
         success: true,
         message: 'OTP sent successfully',
         verificationId: data.verificationId,
-        timeout: data.timeout || 300 // Default 5 minutes
+        timeout: parseFloat(data.timeout) || 60
       });
     } else {
       console.error('❌ OTP send failed:', data);
@@ -225,7 +238,6 @@ async function sendOtp(req, res) {
   } catch (err) {
     console.error('❌ Error sending OTP:', err);
     
-    // Handle specific error cases
     if (err.response?.status === 429) {
       return res.status(429).json({ 
         success: false, 
@@ -269,45 +281,79 @@ async function verifyOtp(req, res) {
       headers: { authToken: token }
     });
     
+    console.log('🔍 Verification response:', response.data);
+    
     const data = response.data.data;
     
-    if (data.verificationStatus === 'VERIFICATION_COMPLETED' && !data.errorMessage) {
+    // FIX: Check for success properly - MessageCentral returns verificationStatus
+    if (
+      (data.verificationStatus === 'VERIFICATION_COMPLETED' || 
+       data.verificationStatus === 'SUCCESS') && 
+      (data.errorMessage === 'Success' || !data.errorMessage || data.errorMessage.toLowerCase().includes('success'))
+    ) {
       // Update user's phone number with proper formatting
       const user = await User.findById(userId);
-      if (user) {
-        const cleanMobileNumber = mobileNumber.replace(/\D/g, '');
-        user.phoneNo = `+${countryCode} ${cleanMobileNumber}`; // Format as +91 8590863462
-        user.isPhoneVerified = true; // This fixes the "pending" issue
-        await user.save();
-        
-        console.log('✅ Phone verified and saved:', {
-          userId,
-          phoneNo: user.phoneNo,
-          isPhoneVerified: user.isPhoneVerified
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
         });
       }
+      
+      const cleanMobileNumber = mobileNumber.replace(/\D/g, '');
+      user.phoneNo = `+${countryCode} ${cleanMobileNumber}`;
+      user.isPhoneVerified = true;
+      await user.save();
+      
+      console.log('✅ Phone verified and saved:', {
+        userId,
+        phoneNo: user.phoneNo,
+        isPhoneVerified: user.isPhoneVerified
+      });
       
       return res.status(200).json({ 
         success: true, 
         message: 'Phone number verified successfully' 
       });
     } else {
+      // Handle specific error cases
+      let errorMessage = 'Invalid verification code. Please try again.';
+      
+      if (data.errorMessage && data.errorMessage !== 'Success') {
+        if (data.errorMessage.toLowerCase().includes('expired') || 
+            data.errorMessage.toLowerCase().includes('timeout')) {
+          errorMessage = 'Verification code has expired. Please request a new one.';
+        } else if (data.errorMessage.toLowerCase().includes('invalid')) {
+          errorMessage = 'Invalid verification code. Please check and try again.';
+        } else {
+          errorMessage = data.errorMessage;
+        }
+      }
+      
       console.error('❌ OTP verification failed:', data);
       
       return res.status(400).json({
         success: false,
-        message: 'Invalid verification code. Please try again.',
+        message: errorMessage,
         error: data.errorMessage || response.data.message
       });
     }
   } catch (err) {
-    console.error('❌ Error verifying OTP:', err);
+    console.error('❌ Error verifying OTP:', {
+      message: err.message,
+      response: err.response?.data,
+      status: err.response?.status
+    });
     
-    // Handle specific error cases
     if (err.response?.status === 400) {
       return res.status(400).json({
         success: false,
         message: 'Invalid or expired verification code'
+      });
+    } else if (err.response?.status === 401 || err.response?.status === 403) {
+      return res.status(500).json({
+        success: false,
+        message: 'Authentication error. Please try again.'
       });
     }
     

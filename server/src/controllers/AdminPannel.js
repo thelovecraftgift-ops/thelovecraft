@@ -101,7 +101,7 @@ const SaveProduct = async (req, res) => {
       return res.status(400).json({ error: "Invalid category" });
     }
 
-    // ✅ FIXED: Include hamper fields in the new product
+    // ✅ FIXED: Include hamper fields in the new product 
     const newProduct = new Product({
       Product_name: req.body.Product_name,
       Product_discription: req.body.Product_discription,

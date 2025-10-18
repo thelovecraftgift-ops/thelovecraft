@@ -39,7 +39,7 @@ const CartPage = () => {
   const { checkoutLoading, processPayment } = usePaymentProcessing();
 
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"cod" | "online" | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"online">("online");
   const [shippingAddress, setShippingAddress] = useState({
     fullName: "",
     address: "",
@@ -65,20 +65,15 @@ const CartPage = () => {
   // Subtotal after coupon discount
   const payableSubtotal = Math.max(0, itemsSubtotal - discountAmount);
 
-  // Dynamic delivery charge (using payableSubtotal for online payment rule)
-  const getDeliveryCharge = (paymentMethod: "cod" | "online" | null = selectedPaymentMethod) => {
-    if (paymentMethod === "online") {
-      return payableSubtotal >= 500 ? 0 : 80;
-    } else {
-      return 80;
-    }
+  // Dynamic delivery charge (free for orders above ₹500)
+  const getDeliveryCharge = () => {
+    return payableSubtotal >= 500 ? 0 : 80;
   };
 
   const DELIVERY_CHARGE = getDeliveryCharge();
   const grandTotal = payableSubtotal + DELIVERY_CHARGE;
 
-  const freeDeliveryGap =
-    selectedPaymentMethod === "online" ? Math.max(0, 500 - payableSubtotal) : null;
+  const freeDeliveryGap = Math.max(0, 500 - payableSubtotal);
 
   // Phone verification success
   useEffect(() => {
@@ -192,7 +187,7 @@ const CartPage = () => {
     });
   };
 
-  const handlePaymentSelection = async (paymentMethod: "cod" | "online") => {
+  const handlePayment = async () => {
     const requiredFields = ["fullName", "address", "city", "state", "pinCode", "phone"];
     const missingFields = requiredFields.filter((f) => !shippingAddress[f].trim());
 
@@ -222,12 +217,12 @@ const CartPage = () => {
       image: item.image || (item.Product_image && item.Product_image[0]),
     }));
 
-    const deliveryCharge = getDeliveryCharge(paymentMethod);
+    const deliveryCharge = getDeliveryCharge();
 
     const success = await processPayment(
       orderItems,
       shippingAddress,
-      paymentMethod,
+      "online",
       {
         itemsTotal: itemsSubtotal,
         deliveryCharge,
@@ -241,15 +236,10 @@ const CartPage = () => {
     if (success) {
       clearCart();
       setIsCheckingOut(false);
-      setSelectedPaymentMethod(null);
       setAppliedCoupon(null);
       setCouponCode("");
       phoneVerification.resetPhoneVerification();
     }
-  };
-
-  const handlePaymentMethodSelect = (method: "cod" | "online") => {
-    setSelectedPaymentMethod(method);
   };
 
   const getItemTotal = (item: any) => {
@@ -340,7 +330,7 @@ const CartPage = () => {
           </motion.div>
 
           {/* Dynamic banners */}
-          {selectedPaymentMethod === "online" && freeDeliveryGap !== null && freeDeliveryGap > 0 && (
+          {freeDeliveryGap > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -349,7 +339,7 @@ const CartPage = () => {
               <div className="flex items-center justify-center gap-2 text-orange-700 text-xs sm:text-sm">
                 <Truck className="w-4 h-4" />
                 <span className="font-semibold">
-                  Add ₹{freeDeliveryGap} more for FREE DELIVERY (Online Payment)
+                  Add ₹{freeDeliveryGap} more for FREE DELIVERY
                 </span>
               </div>
               <div className="mt-2 bg-orange-200 h-2 rounded-full overflow-hidden">
@@ -357,21 +347,6 @@ const CartPage = () => {
                   className="h-full bg-gradient-to-r from-orange-400 to-yellow-500 transition-all duration-500"
                   style={{ width: `${Math.min((payableSubtotal / 500) * 100, 100)}%` }}
                 />
-              </div>
-            </motion.div>
-          )}
-
-          {selectedPaymentMethod === "cod" && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-3 mb-4 shadow-sm"
-            >
-              <div className="flex items-center justify-center gap-2 text-blue-700 text-xs sm:text-sm">
-                <Truck className="w-4 h-4" />
-                <span className="font-semibold">
-                  Cash on Delivery selected: ₹80 delivery charge applies
-                </span>
               </div>
             </motion.div>
           )}
@@ -512,7 +487,6 @@ const CartPage = () => {
                       className="flex-1 rounded-full px-3 py-2 text-xs sm:text-sm bg-red-500 hover:bg-red-600"
                       onClick={() => {
                         clearCart();
-                        setSelectedPaymentMethod(null);
                         setAppliedCoupon(null);
                         setCouponCode("");
                         toast({
@@ -589,36 +563,22 @@ const CartPage = () => {
                   )}
                 </div>
 
-                {/* Payment method */}
+                {/* Payment method - Simplified to only online */}
                 <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl">
                   <h3 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
                     <Shield className="w-4 h-4 text-rose-600" />
-                    Select Payment Method
+                    Payment Method
                   </h3>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="online"
-                        checked={selectedPaymentMethod === "online"}
-                        onChange={() => handlePaymentMethodSelect("online")}
-                        className="accent-rose-600"
-                      />
-                      <span className="text-sm text-gray-800">Online Payment (UPI/Cards/Wallets)</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="cod"
-                        checked={selectedPaymentMethod === "cod"}
-                        onChange={() => handlePaymentMethodSelect("cod")}
-                        className="accent-rose-600"
-                      />
-                      <span className="text-sm text-gray-800">Cash on Delivery</span>
-                    </label>
+                  <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-rose-300">
+                    <Lock className="w-4 h-4 text-rose-600" />
+                    <span className="text-sm font-medium text-gray-800">Online Payment</span>
+                    <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                      Secure
+                    </span>
                   </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    UPI, Credit/Debit Cards, Net Banking & Wallets accepted
+                  </p>
                 </div>
 
                 {/* Items list */}
@@ -665,47 +625,27 @@ const CartPage = () => {
 
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-700 font-medium">Delivery Charge</span>
-                    <span
-                      className={`font-semibold ${
-                        DELIVERY_CHARGE > 0
-                          ? selectedPaymentMethod === "cod"
-                            ? "text-blue-700"
-                            : "text-orange-600"
-                          : "text-green-600"
-                      }`}
-                    >
+                    <span className={`font-semibold ${DELIVERY_CHARGE > 0 ? "text-orange-600" : "text-green-600"}`}>
                       {DELIVERY_CHARGE > 0 ? `₹${DELIVERY_CHARGE}` : "FREE"}
                     </span>
                   </div>
 
-                  {selectedPaymentMethod === "online" &&
-                    DELIVERY_CHARGE > 0 &&
-                    freeDeliveryGap !== null && (
-                      <div className="py-2 px-3 bg-orange-50 rounded-lg border border-orange-100">
-                        <div className="flex items-center justify-between text-xs text-orange-700 mb-1">
-                          <span className="font-medium">Free Delivery Progress</span>
-                          <span className="font-bold">₹{freeDeliveryGap} more</span>
-                        </div>
-                        <div className="bg-orange-200 h-2 rounded-full relative overflow-hidden">
-                          <div
-                            className="bg-gradient-to-r from-orange-400 to-orange-500 h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${Math.min((payableSubtotal / 500) * 100, 100)}%`,
-                            }}
-                          />
-                        </div>
-                        <div className="text-[10px] text-orange-600 mt-1 text-center">
-                          {Math.round((payableSubtotal / 500) * 100)}% towards free delivery
-                        </div>
+                  {DELIVERY_CHARGE > 0 && freeDeliveryGap > 0 && (
+                    <div className="py-2 px-3 bg-orange-50 rounded-lg border border-orange-100">
+                      <div className="flex items-center justify-between text-xs text-orange-700 mb-1">
+                        <span className="font-medium">Free Delivery Progress</span>
+                        <span className="font-bold">₹{freeDeliveryGap} more</span>
                       </div>
-                    )}
-
-                  {selectedPaymentMethod === "cod" && (
-                    <div className="py-2 px-3 bg-blue-50 rounded-lg border border-blue-100">
-                      <div className="text-xs text-blue-700 text-center">
-                        <span className="font-medium">Cash on Delivery</span>
-                        <br />
-                        <span className="text-[10px]">₹80 delivery charge applies for COD</span>
+                      <div className="bg-orange-200 h-2 rounded-full relative overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-orange-400 to-orange-500 h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min((payableSubtotal / 500) * 100, 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="text-[10px] text-orange-600 mt-1 text-center">
+                        {Math.round((payableSubtotal / 500) * 100)}% towards free delivery
                       </div>
                     </div>
                   )}
@@ -808,16 +748,12 @@ const CartPage = () => {
                     <div className="flex justify-between items-center text-rose-700">
                       <span>Delivery</span>
                       <span className="font-medium">
-                        {getDeliveryCharge(selectedPaymentMethod) > 0
-                          ? `₹${getDeliveryCharge(selectedPaymentMethod)}`
-                          : "FREE"}
+                        {DELIVERY_CHARGE > 0 ? `₹${DELIVERY_CHARGE}` : "FREE"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center font-black text-base text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600 pt-2">
                       <span className="text-gray-900">Total Amount</span>
-                      <span>
-                        ₹{(payableSubtotal + getDeliveryCharge(selectedPaymentMethod)).toLocaleString()}
-                      </span>
+                      <span>₹{grandTotal.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -919,9 +855,9 @@ const CartPage = () => {
               </div>
 
               {/* Bottom buttons */}
-              <div className="flex-shrink-0 bg-white border-t-2 border-rose-200 p-6 space-y-3">
+              <div className="flex-shrink-0 bg-white border-t-2 border-rose-200 p-6">
                 <Button
-                  onClick={() => handlePaymentSelection("online")}
+                  onClick={handlePayment}
                   disabled={checkoutLoading}
                   className="w-full h-12 text-sm rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 font-bold text-white shadow-2xl hover:shadow-blue-200 transition-all duration-300"
                 >
@@ -933,39 +869,17 @@ const CartPage = () => {
                   ) : (
                     <div className="flex items-center justify-center gap-2">
                       <Lock className="w-4 h-4" />
-                      Pay Online - ₹
-                      {(payableSubtotal + getDeliveryCharge("online")).toLocaleString()}
-                      {getDeliveryCharge("online") === 0 && payableSubtotal >= 500 && (
+                      Pay Online - ₹{grandTotal.toLocaleString()}
+                      {DELIVERY_CHARGE === 0 && payableSubtotal >= 500 && (
                         <span className="text-xs bg-green-500 px-2 py-0.5 rounded-full ml-1">FREE DELIVERY</span>
                       )}
                     </div>
                   )}
                 </Button>
 
-                <Button
-                  onClick={() => handlePaymentSelection("cod")}
-                  disabled={checkoutLoading}
-                  variant="outline"
-                  className="w-full h-12 text-sm rounded-2xl border-2 border-green-500 text-green-700 hover:bg-green-500 hover:text-white font-bold shadow-2xl hover:shadow-green-200 transition-all duration-300"
-                >
-                  {checkoutLoading ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                      Processing...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2">
-                      <Truck className="w-4 h-4" />
-                      Cash on Delivery - ₹
-                      {(payableSubtotal + getDeliveryCharge("cod")).toLocaleString()}
-                      <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-1">+₹80 DELIVERY</span>
-                    </div>
-                  )}
-                </Button>
-
-                <div className="text-center text-xs text-gray-500 flex items-center justify-center gap-2">
+                <div className="text-center text-xs text-gray-500 flex items-center justify-center gap-2 mt-3">
                   <Lock className="w-3 h-3" />
-                  <span>Free Delivery on Online Payments ₹500+ • COD: ₹80 charge</span>
+                  <span>Free Delivery on Orders ₹500+ • Secure Online Payments</span>
                 </div>
               </div>
             </motion.div>

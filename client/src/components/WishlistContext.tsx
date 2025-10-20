@@ -134,7 +134,6 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
     // User logged out (was authenticated, now not)
     if (previousAuthState && !isAuthenticated) {
-      console.log("User logged out - preserving wishlist in localStorage");
       setHasLoggedOut(true);
 
       // Save current wishlist to localStorage for guest browsing
@@ -144,7 +143,6 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     }
     // User logged in (was not authenticated, now is)
     else if (!previousAuthState && isAuthenticated) {
-      console.log("User logged in - syncing wishlist with backend");
       setHasLoggedOut(false);
       syncWishlistOnLogin();
     }
@@ -178,7 +176,6 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         (item) => item && item.product && item.product._id && item.product.Product_name
       );
 
-      console.log("Loading wishlist from localStorage:", validWishlist.length, "items");
       setWishlist(validWishlist);
     } catch (error) {
       console.error("Error loading wishlist from localStorage:", error);
@@ -189,7 +186,6 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const loadWishlistFromBackend = async () => {
     if (!user || !user.token) return;
 
-    console.log("Loading wishlist from backend for user:", user.email);
 
     try {
       const response = await fetch(`${API_URL}/wishlist`, {
@@ -207,7 +203,6 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
       if (data.wishlist && Array.isArray(data.wishlist)) {
         const frontendWishlist = data.wishlist.map(convertBackendItemToWishlistItem);
-        console.log("Loaded wishlist from backend:", frontendWishlist.length, "items");
         setWishlist(frontendWishlist);
       } else {
         setWishlist([]);
@@ -228,12 +223,10 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (localWishlist.length === 0) {
         // No local wishlist, just load from backend
-        console.log("No local wishlist found, loading from backend");
         await loadWishlistFromBackend();
         return;
       }
 
-      console.log("Syncing local wishlist with backend on login");
 
       // Replace backend wishlist with local wishlist instead of merging
       const backendItems = localWishlist.map(convertProductToBackendFormat);
@@ -256,11 +249,9 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
           // Clear localStorage after successful sync
           localStorage.removeItem("wishlist");
 
-          console.log(`Wishlist synced: ${finalWishlist.length} items`);
         }
       } else {
         // Fallback: use local wishlist
-        console.log("Sync failed, using local wishlist");
         setWishlist(localWishlist);
       }
     } catch (error) {

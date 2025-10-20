@@ -214,7 +214,7 @@ const Orders = () => {
     const fetchOrders = async () => {
       setLoading(true);
       try {
-        const res = await axiosInstance.get(`/cashfree/my-orders/${userId}`);
+        const res = await axiosInstance.get(`/razorpay/my-orders/${userId}`);
         const list = res.data.orders as BackendOrder[];
 
         setOrders(

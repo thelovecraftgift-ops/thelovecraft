@@ -143,7 +143,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     // User logged out (was authenticated, now not)
     if (previousAuthState && !isAuthenticated) {
-      console.log("User logged out - clearing cart and saving to localStorage");
+    
       setHasLoggedOut(true);
 
       // Save current cart to localStorage for guest browsing
@@ -153,7 +153,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
     // User logged in (was not authenticated, now is)
     else if (!previousAuthState && isAuthenticated) {
-      console.log("User logged in - syncing with backend");
+    
       setHasLoggedOut(false);
       syncCartOnLogin();
     }
@@ -187,7 +187,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         (item) => item && item.price && (item.id || item._id) && item.name
       );
 
-      console.log("Loading cart from localStorage:", validCart.length, "items");
+    
       setCart(validCart);
     } catch (error) {
       console.error("Error loading cart from localStorage:", error);
@@ -199,7 +199,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const loadCartFromBackend = async () => {
     if (!user || !user.token) return;
 
-    console.log("Loading cart from backend for user:", user.email);
 
     try {
       const response = await fetch(`${API_URL}/cart`, {
@@ -214,7 +213,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const data = await response.json();
-      console.log("🔍 Backend response:", data);
+      
 
       if (data.cart && Array.isArray(data.cart)) {
         // ✅ DEFENSIVE: Convert items and filter out null results
@@ -229,10 +228,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           })
           .filter(Boolean); // Remove null items
 
-        console.log("Loaded cart from backend:", frontendCart.length, "items");
         setCart(frontendCart);
       } else {
-        console.log("No cart items found or invalid cart structure");
         setCart([]);
       }
     } catch (error) {
@@ -251,12 +248,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (localCart.length === 0) {
         // No local cart, just load from backend
-        console.log("No local cart found, loading from backend");
         await loadCartFromBackend();
         return;
       }
 
-      console.log("Syncing local cart with backend on login");
 
       // ✅ FIXED: Replace backend cart with local cart instead of merging
       // This prevents duplication issues
@@ -290,11 +285,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           // Clear localStorage after successful sync
           localStorage.removeItem("cart");
 
-          console.log(`Cart synced: ${finalCart.length} items`);
         }
       } else {
         // Fallback: use local cart
-        console.log("Sync failed, using local cart");
         setCart(localCart);
       }
     } catch (error) {
@@ -329,7 +322,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       if (isAuthenticated && user && user.token && !hasLoggedOut) {
         const backendProductId = product._id || product.id;
 
-        console.log("🔍 Adding normal product to cart:", backendProductId);
 
         // ✅ SIMPLIFIED: Only send productId and quantity for normal products
         const response = await fetch(`${API_URL}/cart/add`, {
@@ -409,8 +401,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         );
         const backendProductId = product?._id || productId;
 
-        console.log("🔍 Removing product - Frontend ID:", productId);
-        console.log("🔍 Removing product - Backend ID:", backendProductId);
 
         const response = await fetch(
           `${API_URL}/cart/remove/${backendProductId}`,
@@ -509,7 +499,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     const qty = Math.max(1, Math.floor(quantity));
 
-    console.log("🔍 Attempting to update quantity for product:", productId);
     setLoading(true);
     try {
       if (isAuthenticated && user && user.token && !hasLoggedOut) {
@@ -526,12 +515,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         // Use the MongoDB ObjectId (_id) for backend requests
         const backendProductId = product._id;
 
-        console.log("🔍 Frontend ID:", productId);
-        console.log("🔍 Backend ID (_id):", backendProductId);
-        console.log(
-          "🔍 Making backend request to:",
-          `${API_URL}/cart/update/${backendProductId}`
-        );
 
         // Update in backend
         const response = await fetch(
@@ -546,7 +529,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           }
         );
 
-        console.log("🔍 Response status:", response.status);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

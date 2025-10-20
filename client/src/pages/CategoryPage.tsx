@@ -76,13 +76,11 @@ const CategoryPage = () => {
       try {
         setLoading(true);
         
-        console.log('🔍 Fetching products for category:', categoryName);
         
         const res = await axiosInstance.get(
           `/api/getproductsbycategory?category=${categoryName}`
         );
         
-        console.log('📦 Category products response:', res.data);
         
         const productsData = res.data.product || res.data.products || [];
         setProducts(productsData);

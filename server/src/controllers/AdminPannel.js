@@ -516,13 +516,13 @@ const updateCategory = async (req, res) => {
 const updateProduct = async (req,res)=>{
   try{
 
-    const {id , name , description , price , hamperPrice}  = req.body;
+    const {id , name , description , price }  = req.body;
     const response = await Product.findById(id);
     if(!response) throw new Error("invalid product");
     response.Product_name = name
     response.Product_discription = description
     response.Product_price = price
-    response.Hamper_price = hamperPrice
+    // response.Hamper_price = hamperPrice
 
     response.save();
     res.status(200).json({

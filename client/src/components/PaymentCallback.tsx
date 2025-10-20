@@ -80,7 +80,6 @@ const PaymentCallback = () => {
   internalOrderId,
 });
 
-    console.log('🔍 Verification response:', res.data);
 
     // ✅ SIMPLIFIED: Check backend response directly
     if (res.data.success && res.data.paymentStatus === "SUCCESS") {
@@ -89,10 +88,8 @@ const PaymentCallback = () => {
         // Clear cart based on type
         if (cartType === "cart") {
           await axiosInstance.delete("/cart/clear");
-          console.log("🛒 Cart cleared after successful payment");
         } else if (cartType === "hamper") {
           await axiosInstance.delete("/hamper/clear");
-          console.log("🎁 Hamper cleared after successful payment");
         }
       } catch (cartError) {
         console.warn("⚠️ Failed to clear cart:", cartError);

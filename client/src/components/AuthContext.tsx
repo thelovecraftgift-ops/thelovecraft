@@ -52,11 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           
           setUser(userData);
-          console.log('✅ Restored user session:', {
-            email: userData.email,
-            role: userData.role,
-            hasToken: !!userData.token
-          });
+       
         }
       } catch (error) {
         console.error('❌ Error initializing auth:', error);
@@ -95,7 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Regular email/password login
   const login = async (credentials: any) => {
     try {
-      console.log('🔍 Attempting login with credentials:', { email: credentials.email });
       
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
@@ -110,7 +105,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const data = await response.json();
-      console.log('✅ Login response:', data);
 
       // ✅ FIXED: Your backend returns { reply: {...}, accessToken: "...", message: "..." }
       const userWithToken = {
@@ -129,12 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('user_token', data.accessToken); // ✅ Use user_token for consistency
       }
       
-      console.log('✅ User logged in successfully:', {
-        email: userWithToken.email,
-        role: userWithToken.role,
-        hasToken: !!userWithToken.token
-      });
-      
+   
       return { success: true, user: userWithToken };
     } catch (error) {
       console.error('❌ Login error:', error);
@@ -144,12 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // For direct user data login (used by signup flow)
   const loginWithData = (userObj: any, token?: string) => {
-    console.log('🔍 Logging in with user data:', {
-      email: userObj.email,
-      role: userObj.role,
-      hasToken: !!(token || userObj.token)
-    });
-    
+  
     const userWithToken = {
       ...userObj,
       token: token || userObj.token
@@ -170,11 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
-    console.log('✅ User data login successful');
   };
 
   const updateUser = (userObj: any) => {
-    console.log('🔍 Updating user:', userObj.email);
     
     // Preserve existing token if not provided
     const updatedUser = {
@@ -191,12 +173,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('user', JSON.stringify(updatedUser));
     }
     
-    console.log('✅ User updated successfully');
   };
 
   const logout = async () => {
     try {
-      console.log('🔍 Logging out user');
       
       // Call backend logout endpoint
       await fetch(`${API_URL}/auth/logout`, {
@@ -216,7 +196,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("admin_user");
     localStorage.removeItem("admin_token");
     
-    console.log('✅ User logged out successfully');
   };
 
   // isAuthenticated is true if user exists and has a token

@@ -472,7 +472,7 @@ const ProductDetailPage = () => {
                       { label: "Availability", value: product.Product_available ? "In Stock" : "Out of Stock" },
                       { label: "Quality", value: "Premium Handcrafted" },
                       { label: "Material", value: "High Quality Components" },
-                      { label: "Warranty", value: "free shipping order above 499" }
+                      { label: "free shipping", value: "above 499 order" }
                     ].map((spec, index) => (
                       <div key={index} className="flex justify-between py-2 border-b border-rose-100 last:border-b-0">
                         <span className="font-semibold text-rose-800">{spec.label}:</span>

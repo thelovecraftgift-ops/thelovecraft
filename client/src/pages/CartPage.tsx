@@ -65,15 +65,18 @@ const CartPage = () => {
   // Subtotal after coupon discount
   const payableSubtotal = Math.max(0, itemsSubtotal - discountAmount);
 
-  // Dynamic delivery charge (free for orders above ₹500)
+  // Dynamic delivery charge (free for orders ₹499 and above) - FIXED
   const getDeliveryCharge = () => {
-    return payableSubtotal >= 500 ? 0 : 80;
+    return itemsSubtotal >= 499 ? 0 : 80; // Free for ₹499 and above
   };
 
   const DELIVERY_CHARGE = getDeliveryCharge();
   const grandTotal = payableSubtotal + DELIVERY_CHARGE;
 
-  const freeDeliveryGap = Math.max(0, 500 - payableSubtotal);
+  // Free delivery gap calculation - FIXED
+  const freeDeliveryGap = Math.max(0, 499 - itemsSubtotal);
+
+  const freeDeliveryProgress = Math.min((itemsSubtotal / 499) * 100, 100);
 
   // Phone verification success
   useEffect(() => {
@@ -345,8 +348,24 @@ const CartPage = () => {
               <div className="mt-2 bg-orange-200 h-2 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-orange-400 to-yellow-500 transition-all duration-500"
-                  style={{ width: `${Math.min((payableSubtotal / 500) * 100, 100)}%` }}
+                  style={{ width: `${freeDeliveryProgress}%` }}
                 />
+              </div>
+            </motion.div>
+          )}
+
+          {/* Free Delivery Achieved Banner */}
+          {itemsSubtotal >= 499 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-3 mb-4 shadow-sm"
+            >
+              <div className="flex items-center justify-center gap-2 text-green-700 text-xs sm:text-sm">
+                <Truck className="w-4 h-4" />
+                <span className="font-semibold">
+                  🎉 Congratulations! You've unlocked FREE DELIVERY
+                </span>
               </div>
             </motion.div>
           )}
@@ -640,12 +659,24 @@ const CartPage = () => {
                         <div
                           className="bg-gradient-to-r from-orange-400 to-orange-500 h-full rounded-full transition-all duration-500"
                           style={{
-                            width: `${Math.min((payableSubtotal / 500) * 100, 100)}%`,
+                            width: `${freeDeliveryProgress}%`,
                           }}
                         />
                       </div>
                       <div className="text-[10px] text-orange-600 mt-1 text-center">
-                        {Math.round((payableSubtotal / 500) * 100)}% towards free delivery
+                        {Math.round(freeDeliveryProgress)}% towards free delivery
+                      </div>
+                    </div>
+                  )}
+
+                  {DELIVERY_CHARGE === 0 && (
+                    <div className="py-2 px-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center justify-center gap-2 text-green-700 text-xs">
+                        <Truck className="w-4 h-4" />
+                        <span className="font-semibold">🎉 Free Delivery Unlocked!</span>
+                      </div>
+                      <div className="text-[10px] text-green-600 mt-1 text-center">
+                        You've qualified for free delivery
                       </div>
                     </div>
                   )}
@@ -745,7 +776,7 @@ const CartPage = () => {
                         <span>-₹{discountAmount.toLocaleString()}</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center text-rose-700">
+                    <div className={`flex justify-between items-center ${DELIVERY_CHARGE > 0 ? "text-rose-700" : "text-green-700"}`}>
                       <span>Delivery</span>
                       <span className="font-medium">
                         {DELIVERY_CHARGE > 0 ? `₹${DELIVERY_CHARGE}` : "FREE"}
@@ -870,7 +901,7 @@ const CartPage = () => {
                     <div className="flex items-center justify-center gap-2">
                       <Lock className="w-4 h-4" />
                       Pay Online - ₹{grandTotal.toLocaleString()}
-                      {DELIVERY_CHARGE === 0 && payableSubtotal >= 500 && (
+                      {DELIVERY_CHARGE === 0 && itemsSubtotal >= 499 && (
                         <span className="text-xs bg-green-500 px-2 py-0.5 rounded-full ml-1">FREE DELIVERY</span>
                       )}
                     </div>
@@ -879,7 +910,7 @@ const CartPage = () => {
 
                 <div className="text-center text-xs text-gray-500 flex items-center justify-center gap-2 mt-3">
                   <Lock className="w-3 h-3" />
-                  <span>Free Delivery on Orders ₹500+ • Secure Online Payments</span>
+                  <span>Free Delivery on Orders ₹499+ • Secure Online Payments</span>
                 </div>
               </div>
             </motion.div>
